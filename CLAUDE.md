@@ -11,7 +11,7 @@ This project uses **uv** for Python package management.
 uv sync
 
 # Run scripts in virtual environment
-uv run python <script.py>
+uv run python <script>
 
 # Interactive Python session
 uv run ipython
