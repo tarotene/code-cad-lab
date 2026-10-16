@@ -59,8 +59,38 @@ build123d を使い続ける。B-rep のカーネル(フィレット・STEP)、3
 - `lab viewer` で `127.0.0.1:3939` が立ち上がり、ブラウザで開ける。
 - ブラウザを開いた状態で `lab show <部品>` を実行すると、形状が描画される。ブラウザを開く前に送った分は表示に残らず、既定のロゴが出る。
 - `lab watch <部品>` を動かしたまま部品ファイルの穴の径を保存すると、5 秒以内に表示が更新された。
-- 画面に `Clip` タブと計測のアイコンがある(操作して測ることまでは確かめていない)。
-- パッケージ内に外部の `src` / `href` の URL は無い。**ネットワークを切ってのブラウザ表示は未確認**。
+- 画面に `Clip` タブと計測のアイコンがある。操作の確認は下の「オフライン表示とクリッピング・計測の確認」。
+- パッケージ内に外部の `src` / `href` の URL は無い(下の確認で、ネットワークを切った状態でも表示できることを確かめた)。
+
+### オフライン表示とクリッピング・計測の確認(検算済み)
+
+2026-10-16、Linux 6.17.4 x86_64、Python 3.13.14、ocp_viewer 1.2.0(ocp-viewer-core 1.1.2)、Chrome for Testing 153.0.8010.12(Playwright 同梱)で確かめた。Issue #4 の 1・2 点目。
+
+**1. ネットワークを切ったブラウザ表示。** `unshare -rn` のネットワーク名前空間の中(インターフェースは `lo` だけ)で、ビューアと headless Chromium を起動した。名前空間の中から `https://example.com` へは到達できないことを `curl` で確かめた。
+
+```bash
+unshare -rn sh -c '
+  ip link set lo up
+  uv run lab viewer &                                       # 127.0.0.1:3939
+  chrome --headless=new --remote-debugging-port=9222 --user-data-dir=<tmp> \
+         --use-gl=swiftshader --enable-unsafe-swiftshader http://127.0.0.1:3939 &
+  uv run lab show pico_case                                 # ブラウザを開いたあとに送る
+  # DevTools の Page.captureScreenshot で画面を取る
+'
+```
+
+ビューアの画面(ツールバー、`Tree` / `Clip` / `Zebra` / `Material` / `Studio` のタブ)が描画され、`lab show pico_case` で送ったケースの本体と蓋が表示された。外部の資源には依存しない。
+
+観察した不具合が 2 つある。どちらも原因は未確認で、表示そのものは通った。
+
+- 最初の試行では、`lab show` を 2 秒おきに 8 回流したところ、`Unexpected error talking to the viewer` と `ValueError: Port could not be cast to integer value as 'None'` で毎回失敗した。ブラウザを起動した直後の高負荷の中だった。ポートの検出(`port_check` の 1 秒のタイムアウト)が失敗して、ポートが `None` のまま接続したと疑っているが、検証していない。ブラウザを先に 8 秒待ってから `show` を 1 回送る手順に直した再試行では、`OCP_PORT` を指定した場合もしない場合も成功した。
+- 失敗した試行の出力に `UserWarning: Unknown collapse value from viewer: Collapse.ROOT` が 1 回出た(`ocp_viewer_core/config.py`)。ビューアが返した設定値が、クライアントの対応表に無い文字列だった。描画には影響が見られなかった。
+
+**2. クリッピングと計測の操作。** ホストの Chromium(Playwright)で `lab viewer` を開き、`lab show pico_assembly`(3 Solid)を送って操作した。
+
+- `Clip` タブには、赤・緑・青の 3 平面のスライダーと数値欄がある。青(Z)の平面を 0 にすると、基板・本体・蓋の断面が斜線で塗られて出た(取付ピンの円も切れている)。値は形状の中心が原点で、範囲は -40〜40。形状の外(Z で +5 など)では、何も切れない。
+- ツールバーの `Distance`(`D` キー)を押して、基板の上面と本体の床の面を順に選ぶと、パネルに `distance 2.500 (min)`、`point 1 (25.5, 5.7, 3.7)`、`point 2 (25.5, 5.7, 1.2)`、面の法線が出た。設計値(`standoff_h` 1.5 + `pcb_t` 1.0 = 2.5 mm、床の上面 z = 1.2 mm)と一致する。1 面だけ選ぶと、面の種類と面積(基板の上面で `plane: area ≈ 1064.38`)が画面の下に出た。
+- 注意: 画面上の位置でクリックして面を選んだ。Playwright の `click` は座標を取れないので、マウスの操作は `page.mouse.click` で行った。
 
 ## スライサー(書き出した 3MF の受け入れ)
 
@@ -68,10 +98,14 @@ build123d を使い続ける。B-rep のカーネル(フィレット・STEP)、3
 
 同日、Pico ケースのプレート(8 部品)で、同梱のプリセット(P1S 0.4 nozzle、0.20mm Standard、Bambu PLA Basic)を `--load-settings` / `--load-filaments` で渡して試した。スライスは通り(警告なし、予測時間は約 19 分)、**重量は 0.00 g** になった(体積 7.8 cm³ から、PLA で約 10 g のはず)。同梱のプリセットは `inherits` で別のプリセットを継承しており、CLI が継承を解決していない可能性を疑っているが、原因は未確認。この予測時間は、実機の設定での値とは言えない。
 
+**重量 0.00 g の原因の推論(一次ソースの読み取り、実機の A/B は未検証)。** upstream の Bambu Studio v02.08.02.61(Flathub 2.8.2.61 のソースのタグ)で、CLI の `--load-settings` / `--load-filaments` は JSON の `inherits` を解決しない(`src/BambuStudio.cpp` の `load_config_file`、`src/libslic3r/Config.cpp` の `load_from_json`)。`filament_density` の既定値は 0(`src/libslic3r/PrintConfig.cpp`)で、P1S 用の `Bambu PLA Basic @BBL P1S 0.4 nozzle.json` には無く、親の `@base.json` と `fdm_filament_pla.json` にある。継承が解決されないので密度が 0 のままになり、重量が 0.00 g になる、という連鎖で説明がつく。GUI は親の設定を土台に子の差分を重ねて解決する(`src/libslic3r/Preset.cpp`)。`--export-settings` で出る JSON は `from: project` で、そのままは `--load-settings` に戻せない。
+
+**この確認を行った環境が、このホストに残っていない。** 2026-10-16 のこのホスト(vega)には、Bambu Studio の flatpak が入っておらず、`flatpak history` にも記録が無い。上の「2.8.2.61 の CLI で確かめた」記述の環境は不明で、同梱のプリセットを渡した試行も、このホストで再現できていない。導入は dotfiles の宣言(`tarotene/dotfiles#811`、`home/modules/flatpak.nix`)で行う。導入後に、継承を解決した設定で再確認する(Issue #4 の 3 点目)。
+
 この確認で、書き出しの欠陥が 1 つ見つかった。Compound をそのまま `Mesher.add_shape` に渡すと、入れ子の子ごとに 1 つのメッシュ(スライサー上の 1 オブジェクト)にまとまる。Solid ごとに渡すよう直し、3MF のメッシュ数が Solid の数と一致することをテストで見ている。**実機の P1S / PLA の見積もりは未確認**。
 
 ## 未確認の事項
 
-- ocp_viewer の、ネットワークを切ったブラウザ表示とクリッピングの操作
-- Bambu P1S / PLA のプリセットでの印刷時間と材料の重さ(同梱プリセットを CLI に渡すと重量が 0.00 g になる原因)
+- Bambu P1S / PLA のプリセットでの印刷時間と材料の重さ(重量が 0.00 g になる原因は、上の推論を実機で確かめる。Bambu Studio の導入待ち)
+- `lab show` の、ブラウザ起動直後の高負荷での `ValueError`(ポートが `None`)の原因と、`Unknown collapse value` の警告の原因
 - 上の表の「調査報告」の項目(自分で読み戻していない)

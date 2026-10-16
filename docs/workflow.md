@@ -47,5 +47,5 @@ USB メモリなど、工房の PC に渡す手段は、予約するときに確
 ## 6. 実物を測って、引数へ戻す
 
 - 採用する `fit`(と必要なら `snap_bump`)を `parts/pico_case.py` の `Dims` の既定値に反映する
-- BOOTSEL の穴の位置(`bootsel_x` / `bootsel_y`)は、データシートの図から読み取った近似値なので、実物の Pico に当てて合わせる
+- BOOTSEL の穴の位置(`bootsel_x` / `bootsel_y`)は、公式の 3D モデル(STEP)の値で、データシートの寸法図には無い(公式は「guidance only」としている)。実物の Pico に当てて合わせる
 - 変更は PR にして、`docs/printers/bambu-p1s-x1.md` の実測の欄と一緒に出す
