@@ -57,3 +57,13 @@ def test_empty_shape_fails():
     report = inspect_shape("empty", Compound([]))
     assert not report.ok
     assert any("体積が 0 以下" in p for p in report.problems)
+
+
+def test_nested_compound_volume_counts_every_solid():
+    # 入れ子の Compound の shape.volume は直下の Solid しか数えない。検査は Solid ごとに合わせる
+    inner = Compound([Pos(0, 0, 5) * Box(10, 10, 10), Pos(30, 0, 5) * Box(10, 10, 10)])
+    outer = Compound([inner, Pos(0, 40, 2.5) * Box(5, 5, 5)])
+    report = inspect_shape("nested", outer)
+    assert report.solids == 3
+    assert report.volume == pytest.approx(2125.0)
+    assert report.ok
