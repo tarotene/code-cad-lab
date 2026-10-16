@@ -65,12 +65,23 @@ def test_pico_print_layout_sits_on_the_plate():
 
 
 def test_pico_mounting_holes_follow_the_datasheet():
-    # Raspberry Pi Pico Datasheet, Figure 3(取得 2026-10-16): 穴の間隔は 47 x 11.4 mm、φ2.1
+    # Raspberry Pi Pico / Pico 2 Datasheet, Figure 3(取得 2026-10-16。2 つの図は同じ寸法):
+    # 穴の間隔は 47 x 11.4 mm、φ2.1。USB の突き出しは 1.3 (typ)
     m = load("pico_case")
     d = m.Dims()
     assert (d.hole_dx, d.hole_dy, d.hole_d) == (47.0, 11.4, 2.1)
     assert sorted(d.holes) == [(-23.5, -5.7), (-23.5, 5.7), (23.5, -5.7), (23.5, 5.7)]
     assert d.pcb_l - d.hole_dx == pytest.approx(4.0)  # 穴は短辺から 2.0 mm
+    assert d.usb_overhang == 1.3
+
+
+def test_pico_bootsel_follows_the_official_step():
+    # BOOTSEL の寸法はデータシートの図に無い。公式 STEP(Pico R3 / Pico 2 / Pico W、取得 2026-10-16)
+    # のスイッチ本体の中心は、3 機種とも基板の中心から USB 側へ 13.5 mm、長軸から 3.5 mm。
+    # STEP は公式が「guidance only」とするので、実物で確かめる(Issue #7)。
+    m = load("pico_case")
+    d = m.Dims()
+    assert (d.bootsel_x, d.bootsel_y) == (13.5, 3.5)
 
 
 def test_plate_fits_the_bed_with_all_pieces():

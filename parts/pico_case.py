@@ -3,20 +3,28 @@
 ピンヘッダ無しの基板を収める。USB は +X 側の端、基板は長辺を X に置く。蓋が本体にかぶさり、
 蓋の袖の突起が本体の外壁の溝に落ちて止まる(形状は `_snap.py`)。
 
-寸法の出典: Raspberry Pi Pico Datasheet, 2. Mechanical specification, Figure 3
-(https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf、Build date 03/07/2026、
-取得 2026-10-16)。そこから確かめた値は基板 51 x 21 mm、厚さ 1 mm、取付穴 4 x φ2.1 mm
-(穴の中心間隔は長手 47 mm・短手 11.4 mm)、USB コネクタの幅 8 mm。
+寸法の出典(取得 2026-10-16):
 
-**図の画素から推定した近似値(±0.5 mm 程度)**:
+- Raspberry Pi Pico Datasheet, 2. Mechanical specification, Figure 3
+  (https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf、Build date 03/07/2026)。
+  基板 51 x 21 mm、厚さ 1 mm、取付穴 4 x φ2.1 mm(穴の中心間隔は長手 47 mm・短手 11.4 mm)、
+  USB コネクタの幅 8 mm と突き出し 1.3 mm(図の「1.3 (typ)」)。
+- Raspberry Pi Pico 2 Datasheet(https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf、
+  Build date 03/07/2026)の Figure 3 は、同じ寸法の集合を示す。
 
-- BOOTSEL ボタンの位置(`bootsel_x`, `bootsel_y`)。穴は φ3.0 と余裕を持たせてある
-- USB コネクタの突き出し(`usb_overhang` = 1.3 mm)
+**公式の 3D モデル(STEP)から取った値**: BOOTSEL ボタンの位置(`bootsel_x`, `bootsel_y`)。
+データシートの寸法図には BOOTSEL の寸法線が無い。STEP は Pico / Pico 2 / Pico W の 3 機種で
+スイッチ本体の中心が同じ(基板の中心から USB 側へ 13.5 mm、長軸から 3.5 mm)。ただし STEP は
+公式が「guidance only, without guarantee of accuracy」としている。**実物の Pico に当てて確かめる**
+(Issue #7)。穴は φ3.0 と余裕を持たせてある。
 
 **概略で、データシートの値ではないもの**: 基板モデル(`board`)の USB シェルの長さと高さ、
-BOOTSEL ボタンの大きさ。組み付けの干渉検査にだけ使う。
+BOOTSEL ボタンの大きさと高さ(STEP の値に合わせた近似)。組み付けの干渉検査にだけ使う。
 
-Pico 2 が同じ外形・取付穴かは未確認(Pico 2 のデータシートで確かめる)。
+対応する基板: Pico と Pico 2(外形・取付穴・USB が同一。Pico 2 のデータシートの
+「Differences from Raspberry Pi Pico」に機械的な差が無く、公式ドキュメントも
+「pinout and board layout … is the same」と述べる)。ピンヘッダ無しで収める。Pico W / Pico 2 W は
+下辺にアンテナの空き領域(14 x 9 mm、金属で囲わない)があるので、このケースの対象外。
 
 はめ合いの寸法(`clearance` `fit` `snap_bump` ほか)は、工房の機械で刷って初めて決まる値なので、
 すべて引数にしてある。
@@ -41,14 +49,14 @@ class Dims:
     hole_dx: float = 47.0  # 取付穴の長手方向の中心間隔
     hole_dy: float = 11.4  # 同、短手方向
     usb_w: float = 8.0
-    # --- 基板(図からの推定・概略) ---
-    usb_overhang: float = 1.3
+    usb_overhang: float = 1.3  # 基板の端から外へ(Figure 3 の 1.3 (typ))
+    # --- 基板(公式 STEP の値・概略) ---
     usb_len: float = 5.6
     usb_h: float = 2.7
-    bootsel_x: float = 13.7  # 基板の中心から。USB 側が +X
-    bootsel_y: float = 4.0
+    bootsel_x: float = 13.5  # 基板の中心から。USB 側が +X(公式 STEP、実物で要確認)
+    bootsel_y: float = 3.5
     bootsel_size: float = 3.6
-    bootsel_h: float = 1.5
+    bootsel_h: float = 2.6  # 基板の上面から(STEP のアクチュエータの天面 2.59 mm)
     # --- 本体 ---
     clearance: float = 0.3  # 基板と内壁の隙間(片側)
     wall: float = 1.6
