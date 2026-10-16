@@ -6,6 +6,7 @@ uv run lab watch <部品>               # 保存のたびにビューアへ送�
 uv run lab show <部品> [--set clearance=0.2]
 uv run lab check <部品> | --all
 uv run lab export <部品> | --all [--out out]
+uv run lab slice <部品> | --all [--out out]   # Bambu Studio の CLI で予測時間と重さを出す
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import sys
 from pathlib import Path
 
 from . import parts
+from . import slice as slicer
 from .check import inspect_shape
 from .export import export_all
 
@@ -84,6 +86,32 @@ def cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_slice(args: argparse.Namespace) -> int:
+    version = slicer.installed_version()
+    if version is not None and version != slicer.EXPECTED_VERSION:
+        print(
+            f"警告: Bambu Studio {version} です(確かめた版は {slicer.EXPECTED_VERSION})",
+            file=sys.stderr,
+        )
+    params = _parse_sets(args.set)
+    out = Path(args.out)
+    for name in _targets(args):
+        (three_mf, _step) = export_all(parts.build(name, params), out, name)[:2]
+        try:
+            result = slicer.slice_3mf(
+                three_mf,
+                out,
+                name,
+                printer=args.printer,
+                process=args.process,
+                filament=args.filament,
+            )
+        except (slicer.SlicerNotFoundError, slicer.PresetError) as exc:
+            raise SystemExit(str(exc)) from None
+        print(result.line())
+    return 0
+
+
 def cmd_viewer(args: argparse.Namespace) -> int:
     os.execvp(sys.executable, [sys.executable, "-m", "ocp_viewer", *args.viewer_args])
 
@@ -132,6 +160,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--angular", type=float, default=0.1, help="角度の許容差(rad)")
     p.add_argument("--stl", action="store_true", help="STL も書く")
     p.set_defaults(func=cmd_export)
+
+    p = sub.add_parser("slice", help="書き出して Bambu Studio でスライスし、時間と重さを出す")
+    p.add_argument("name", nargs="?")
+    p.add_argument("--all", action="store_true")
+    p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE")
+    p.add_argument("--out", default="out")
+    p.add_argument("--printer", default=slicer.DEFAULT_PRINTER)
+    p.add_argument("--process", default=slicer.DEFAULT_PROCESS)
+    p.add_argument("--filament", default=slicer.DEFAULT_FILAMENT)
+    p.set_defaults(func=cmd_slice)
 
     p = sub.add_parser("viewer", help="ビューアを常駐させる")
     p.add_argument("viewer_args", nargs=argparse.REMAINDER)
