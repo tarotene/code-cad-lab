@@ -25,6 +25,14 @@ uv run lab check --all
 uv run lab export plate_pico_v1     # out/plate_pico_v1.3mf と .step
 ```
 
+CLI で予測時間と材料の重さだけ見るなら、書き出しからスライスまで 1 本で通せる(Bambu Studio の導入が要る。導入は dotfiles の宣言で行う):
+
+```bash
+uv run lab slice plate_pico_v1      # 既定は P1S 0.4 nozzle / 0.20mm Standard / Bambu PLA Basic
+```
+
+Bambu Studio の CLI は、渡すプリセットの JSON の `inherits` を解決しない。`lab slice` は、インストール済みの Bambu Studio のプリセットを実行時に読み、GUI と同じ意味(親 → `include` → 子の順に重ねる)で解決した JSON を `out/presets/` に作ってから CLI に渡す。プリセットの実体はこのリポジトリに置かない。場所は環境変数 `BAMBU_PROFILES`、起動コマンドは `BAMBU_STUDIO` で上書きできる。
+
 `out/` の 3MF を、家の Bambu Studio(機種は工房の機種、材料は PLA)で開く。確かめること:
 
 - 部品の数と向き(本体は開口が上、蓋は板が下)

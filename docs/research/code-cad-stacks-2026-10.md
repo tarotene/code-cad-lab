@@ -100,6 +100,8 @@ unshare -rn sh -c '
 
 **重量 0.00 g の原因の推論(一次ソースの読み取り、実機の A/B は未検証)。** upstream の Bambu Studio v02.08.02.61(Flathub 2.8.2.61 のソースのタグ)で、CLI の `--load-settings` / `--load-filaments` は JSON の `inherits` を解決しない(`src/BambuStudio.cpp` の `load_config_file`、`src/libslic3r/Config.cpp` の `load_from_json`)。`filament_density` の既定値は 0(`src/libslic3r/PrintConfig.cpp`)で、P1S 用の `Bambu PLA Basic @BBL P1S 0.4 nozzle.json` には無く、親の `@base.json` と `fdm_filament_pla.json` にある。継承が解決されないので密度が 0 のままになり、重量が 0.00 g になる、という連鎖で説明がつく。GUI は親の設定を土台に子の差分を重ねて解決する(`src/libslic3r/Preset.cpp`)。`--export-settings` で出る JSON は `from: project` で、そのままは `--load-settings` に戻せない。
 
+**`lab slice`(Issue #4 の 3 点目への答え)。** CLI に渡す前に継承を解決する薄いラッパを足した(`src/lab/slice.py`)。結合の順序は upstream の `src/libslic3r/PresetBundle.cpp`(v02.08.02.61、約 L4795-4930)に揃えた: 親の解決済みの設定、`include` の各ファイルの値、子自身の値の順に重ねる。既定の P1S のマシンプリセットは `include` で 5 つの gcode テンプレートを使うので、`include` の解決は必須だった。実物の鎖(upstream のタグから取得した P1S 0.4 nozzle / 0.20mm Standard @BBL X1C / Bambu PLA Basic @BBL P1S 0.4 nozzle の JSON)で解決すると、`filament_density` は 1.26、マシンの `machine_start_gcode` も入る(データの上での確認)。**Bambu Studio の CLI に渡した実機の確認と、予測時間・重さの実測は、Bambu Studio の導入後に行う(未確認)。**
+
 **この確認を行った環境が、このホストに残っていない。** 2026-10-16 のこのホスト(vega)には、Bambu Studio の flatpak が入っておらず、`flatpak history` にも記録が無い。上の「2.8.2.61 の CLI で確かめた」記述の環境は不明で、同梱のプリセットを渡した試行も、このホストで再現できていない。導入は dotfiles の宣言(`tarotene/dotfiles#811`、`home/modules/flatpak.nix`)で行う。導入後に、継承を解決した設定で再確認する(Issue #4 の 3 点目)。
 
 この確認で、書き出しの欠陥が 1 つ見つかった。Compound をそのまま `Mesher.add_shape` に渡すと、入れ子の子ごとに 1 つのメッシュ(スライサー上の 1 オブジェクト)にまとまる。Solid ごとに渡すよう直し、3MF のメッシュ数が Solid の数と一致することをテストで見ている。**実機の P1S / PLA の見積もりは未確認**。
