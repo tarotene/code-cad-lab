@@ -43,4 +43,6 @@
 
 - Bambu Studio 2.8.2.61 の CLI で、書き出した 3MF のスライスが通る(終了コード 0、警告なし、オブジェクトは部品の数と一致)。
 - 同梱のプリセット(P1S 0.4 nozzle、0.20mm Standard、Bambu PLA Basic)を `--load-settings` / `--load-filaments` で渡すと、プレート 1 枚(8 部品)の予測時間は約 19 分と出た。**ただし重量が 0.00 g になった**(体積は 7.8 cm³ で、PLA の密度から約 10 g のはず)。同梱のプリセットは `inherits` で別のプリセットを継承しており、CLI が継承を解決していない可能性を疑っているが、原因は未確認。この予測時間は、実機の設定での値とは言えない。
+- 重量が 0.00 g になる原因として、CLI が `inherits` を解決しないこと(`filament_density` が親のプリセットにあり、既定値は 0)を、upstream のソース(v02.08.02.61)から読み取った。実機での確認(A/B)は未了。詳細は `docs/research/code-cad-stacks-2026-10.md`。
+- **このホストには Bambu Studio の flatpak が入っていない**(2026-10-16 に `flatpak info` と `flatpak history` で確認)。上の「確かめた」記述を行った環境は不明。導入は dotfiles の `home/modules/flatpak.nix`(`tarotene/dotfiles#811`)で宣言している。導入後に再確認する。
 - 工房の PC の Bambu Studio の版: 未確認。
