@@ -124,6 +124,17 @@ def test_cli_arguments_follow_the_wiki_form(tmp_path):
     assert "plate.sliced.3mf" in args
 
 
+def test_flatpak_cannot_read_outside_home(tmp_path):
+    home = tmp_path / "home"
+    (home / "out").mkdir(parents=True)
+    flatpak = ["flatpak", "run", slicer.APP_ID]
+    slicer.ensure_visible_to_sandbox(home / "out", flatpak, home=home)  # ホームの下は通る
+    with pytest.raises(slicer.SlicerNotFoundError, match="ホームの外"):
+        slicer.ensure_visible_to_sandbox(tmp_path / "elsewhere", flatpak, home=home)
+    # flatpak 以外の起動では、パスについて何も言わない
+    slicer.ensure_visible_to_sandbox(tmp_path / "elsewhere", ["/opt/bambu"], home=home)
+
+
 def write_sliced(path: Path, config: str) -> None:
     with zipfile.ZipFile(path, "w") as z:
         z.writestr("Metadata/slice_info.config", config)

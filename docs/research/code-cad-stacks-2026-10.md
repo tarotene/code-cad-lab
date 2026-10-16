@@ -96,18 +96,40 @@ unshare -rn sh -c '
 
 2026-10-16、Bambu Studio 2.8.2.61(Flathub)の CLI に、`lab export` で書き出した 3MF を `--slice 0` で渡し、スライスが終了コード 0 で通ることを確かめた(検算済み)。外形は部品の寸法(20 × 20 × 10 mm)と一致した。ただし機種とフィラメントのプリセットを渡していないので、返った予測時間(約 17 分)と使用量(0 g)は、実機のプリセットでの値ではない。
 
-同日、Pico ケースのプレート(8 部品)で、同梱のプリセット(P1S 0.4 nozzle、0.20mm Standard、Bambu PLA Basic)を `--load-settings` / `--load-filaments` で渡して試した。スライスは通り(警告なし、予測時間は約 19 分)、**重量は 0.00 g** になった(体積 7.8 cm³ から、PLA で約 10 g のはず)。同梱のプリセットは `inherits` で別のプリセットを継承しており、CLI が継承を解決していない可能性を疑っているが、原因は未確認。この予測時間は、実機の設定での値とは言えない。
+同日、Pico ケースのプレート(8 部品)で、同梱のプリセット(P1S 0.4 nozzle、0.20mm Standard、Bambu PLA Basic)を `--load-settings` / `--load-filaments` で渡して試した。スライスは通り(警告なし、予測時間は約 19 分)、**重量は 0.00 g** になった(体積 7.8 cm³ から、PLA で約 10 g のはず)。同梱のプリセットは `inherits` で別のプリセットを継承しており、CLI が継承を解決していない可能性を疑っていた(この原因は下で確認した)。この予測時間は、実機の設定での値とは言えない。
 
-**重量 0.00 g の原因の推論(一次ソースの読み取り、実機の A/B は未検証)。** upstream の Bambu Studio v02.08.02.61(Flathub 2.8.2.61 のソースのタグ)で、CLI の `--load-settings` / `--load-filaments` は JSON の `inherits` を解決しない(`src/BambuStudio.cpp` の `load_config_file`、`src/libslic3r/Config.cpp` の `load_from_json`)。`filament_density` の既定値は 0(`src/libslic3r/PrintConfig.cpp`)で、P1S 用の `Bambu PLA Basic @BBL P1S 0.4 nozzle.json` には無く、親の `@base.json` と `fdm_filament_pla.json` にある。継承が解決されないので密度が 0 のままになり、重量が 0.00 g になる、という連鎖で説明がつく。GUI は親の設定を土台に子の差分を重ねて解決する(`src/libslic3r/Preset.cpp`)。`--export-settings` で出る JSON は `from: project` で、そのままは `--load-settings` に戻せない。
+**重量 0.00 g の原因(一次ソースの読み取り、実機の A/B は下の「`lab slice` の実機の確認」で確認済み)。** upstream の Bambu Studio v02.08.02.61(Flathub 2.8.2.61 のソースのタグ)で、CLI の `--load-settings` / `--load-filaments` は JSON の `inherits` を解決しない(`src/BambuStudio.cpp` の `load_config_file`、`src/libslic3r/Config.cpp` の `load_from_json`)。`filament_density` の既定値は 0(`src/libslic3r/PrintConfig.cpp`)で、P1S 用の `Bambu PLA Basic @BBL P1S 0.4 nozzle.json` には無く、親の `@base.json` と `fdm_filament_pla.json` にある。継承が解決されないので密度が 0 のままになり、重量が 0.00 g になる、という連鎖で説明がつく。GUI は親の設定を土台に子の差分を重ねて解決する(`src/libslic3r/Preset.cpp`)。`--export-settings` で出る JSON は `from: project` で、そのままは `--load-settings` に戻せない。
 
-**`lab slice`(Issue #4 の 3 点目への答え)。** CLI に渡す前に継承を解決する薄いラッパを足した(`src/lab/slice.py`)。結合の順序は upstream の `src/libslic3r/PresetBundle.cpp`(v02.08.02.61、約 L4795-4930)に揃えた: 親の解決済みの設定、`include` の各ファイルの値、子自身の値の順に重ねる。既定の P1S のマシンプリセットは `include` で 5 つの gcode テンプレートを使うので、`include` の解決は必須だった。実物の鎖(upstream のタグから取得した P1S 0.4 nozzle / 0.20mm Standard @BBL X1C / Bambu PLA Basic @BBL P1S 0.4 nozzle の JSON)で解決すると、`filament_density` は 1.26、マシンの `machine_start_gcode` も入る(データの上での確認)。**Bambu Studio の CLI に渡した実機の確認と、予測時間・重さの実測は、Bambu Studio の導入後に行う(未確認)。**
+**`lab slice`(Issue #4 の 3 点目への答え)。** CLI に渡す前に継承を解決する薄いラッパを足した(`src/lab/slice.py`)。結合の順序は upstream の `src/libslic3r/PresetBundle.cpp`(v02.08.02.61、約 L4795-4930)に揃えた: 親の解決済みの設定、`include` の各ファイルの値、子自身の値の順に重ねる。既定の P1S のマシンプリセットは `include` で 5 つの gcode テンプレートを使うので、`include` の解決は必須だった。実物の鎖(upstream のタグから取得した P1S 0.4 nozzle / 0.20mm Standard @BBL X1C / Bambu PLA Basic @BBL P1S 0.4 nozzle の JSON)で解決すると、`filament_density` は 1.26、マシンの `machine_start_gcode` も入る(データの上での確認)。Bambu Studio の CLI に渡した実機の確認は、次の節に書く。
 
-**この確認を行った環境が、このホストに残っていない。** 2026-10-16 のこのホスト(vega)には、Bambu Studio の flatpak が入っておらず、`flatpak history` にも記録が無い。上の「2.8.2.61 の CLI で確かめた」記述の環境は不明で、同梱のプリセットを渡した試行も、このホストで再現できていない。導入は dotfiles の宣言(`tarotene/dotfiles#811`、`home/modules/flatpak.nix`)で行う。導入後に、継承を解決した設定で再確認する(Issue #4 の 3 点目)。
+**これまでの確認を行った環境の所在は不明のまま。** 2026-10-16 の `lab slice` の導入前、このホスト(vega)には Bambu Studio の flatpak が無く、`flatpak history` にも記録が無かった。上の「2.8.2.61 の CLI で確かめた」記述の環境は特定できない。導入は dotfiles の宣言(`tarotene/dotfiles#811`、`home/modules/flatpak.nix`)を `hms` で適用して行った(2026-10-16、flatpak の user 領域、版 2.8.2.61)。
 
-この確認で、書き出しの欠陥が 1 つ見つかった。Compound をそのまま `Mesher.add_shape` に渡すと、入れ子の子ごとに 1 つのメッシュ(スライサー上の 1 オブジェクト)にまとまる。Solid ごとに渡すよう直し、3MF のメッシュ数が Solid の数と一致することをテストで見ている。**実機の P1S / PLA の見積もりは未確認**。
+### `lab slice` の実機の確認(検算済み)
+
+2026-10-16、Linux 6.17.4 x86_64、Bambu Studio 2.8.2.61(Flathub、user 領域)、プレートは `plate_pico_v1`(8 部品)。Issue #4 の 3 点目。
+
+```bash
+uv run lab slice plate_pico_v1        # 予測時間 24 分、重さ 9.90 g
+```
+
+| 渡し方 | 予測時間 | 重さ(`slice_info.config` の `weight`) | filament の使用量(`used_g`) |
+|---|---|---|---|
+| 解決済み(`lab slice`) | 1452 秒(約 24 分) | 9.90 g | 9.90 g(3.27 m) |
+| 継承を解決しない(同梱の子の JSON をそのまま) | 1153 秒(約 19 分) | 空(値が入らない) | 0.00 g |
+
+- **A/B の結果**: 同じ 3MF に、同梱の同じプリセットを、継承を解決して渡した場合と、解決せずに渡した場合を比べた。解決しないと使用量が 0.00 g になり、以前の記録(約 19 分、0.00 g)を再現した。原因は、`filament_density` が子のプリセットに無いことと、CLI が継承を解決しないことで説明がつく。
+- **独立した検算**: 解決済みの filament の使用量 3.27 m(直径 1.75 mm で約 7.87 cm³)に密度 1.26 を掛けると 9.91 g で、報告された 9.90 g と一致する。独立に求めた体積(約 7.8 cm³)とも整合する。
+- **予測時間も変わる**: 約 19 分が約 24 分になる。時間の値に効く設定(速度など)も継承元にあるためと推測している(キーごとの確認はしていない)。継承を解かないと、時間の見積もりも設定から外れる。
+- **想定の確認**: `slice_info.config` のキー名(`prediction` と `weight`)は想定どおりだった。flatpak の中のプリセットは `files/share/BambuStudio/profiles/BBL` にあり、自動検出が通った。
+- **サンドボックス**: flatpak 版の CLI は、ホーム(`--filesystem=home`)の外のファイルを読めない。ホストの `/tmp` やアプリ自身のパスを渡すと、`can not find setting file` とだけ出て終了コード 253 になる(試した)。`lab slice` は `--out` がホームの外なら、実行前にその理由を言って止まる。
+- **CLI の出力に出る `Failed to create GLFW window`(`Invalid OpenGL version 3.5`)**: スライスの結果(終了コード 0、`result.json` の `return_code` 0)には影響しなかった。原因は未確認(画面の無いサンドボックスで GL の文脈を作れないことを疑っている)。
+- この見積もりは、P1S 0.4 nozzle の同梱プリセット(0.20mm Standard、Bambu PLA Basic)での値で、工房の機械の実際の設定の値とは限らない。
+
+この確認で、書き出しの欠陥が 1 つ見つかった。Compound をそのまま `Mesher.add_shape` に渡すと、入れ子の子ごとに 1 つのメッシュ(スライサー上の 1 オブジェクト)にまとまる。Solid ごとに渡すよう直し、3MF のメッシュ数が Solid の数と一致することをテストで見ている。実機の P1S / PLA の見積もりは、上の「`lab slice` の実機の確認」にある。
 
 ## 未確認の事項
 
-- Bambu P1S / PLA のプリセットでの印刷時間と材料の重さ(重量が 0.00 g になる原因は、上の推論を実機で確かめる。Bambu Studio の導入待ち)
+- 工房の機械の実際の設定(ノズル径・プリセットの版)での印刷時間と材料の重さ
+- CLI の出力に出る `Failed to create GLFW window` の原因
 - `lab show` の、ブラウザ起動直後の高負荷での `ValueError`(ポートが `None`)の原因と、`Unknown collapse value` の警告の原因
 - 上の表の「調査報告」の項目(自分で読み戻していない)

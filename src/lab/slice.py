@@ -154,11 +154,27 @@ def find_profiles_dir() -> Path | None:
     if result.returncode != 0:
         return None
     root = Path(result.stdout.strip())
-    # flatpak の中の resources の下位パスは、導入した実機で確かめる(未確認)。
+    # 2.8.2.61 の flatpak では files/share/BambuStudio/profiles/BBL(2026-10-16 に実機で確認)。
     for found in sorted(root.glob("**/profiles/BBL")):
         if (found / "machine").is_dir():
             return found
     return None
+
+
+def ensure_visible_to_sandbox(out_dir: Path, command: list[str], home: Path | None = None) -> None:
+    """flatpak 版は、ホームの外のファイルを読めない(`/tmp` はサンドボックス自身のもの)。
+
+    見えないパスを渡すと、CLI は「can not find setting file」とだけ出して終わるので、
+    渡す前に止めて原因を言う。flatpak 以外の起動(BAMBU_STUDIO)には何も言わない。
+    """
+    if command[:2] != ["flatpak", "run"]:
+        return
+    root = (home or Path.home()).resolve()
+    if not out_dir.resolve().is_relative_to(root):
+        raise SlicerNotFoundError(
+            f"出力先 {out_dir} がホストのホームの外です。flatpak 版の Bambu Studio は"
+            f"ホーム({root})の外のファイルを読めないので、--out にはホームの下を指定してください"
+        )
 
 
 def installed_version() -> str | None:
@@ -250,7 +266,9 @@ def slice_3mf(
     machine, proc, fil = write_presets(
         profiles, out_dir, printer=printer, process=process, filament=filament
     )
-    command = [*bambu_command(), *build_args(input_3mf, out_dir, name, machine, proc, fil)]
+    launcher = bambu_command()
+    ensure_visible_to_sandbox(out_dir, launcher)
+    command = [*launcher, *build_args(input_3mf, out_dir, name, machine, proc, fil)]
     run = subprocess.run(command, capture_output=True, text=True)
     if run.returncode != 0:
         raise RuntimeError(
