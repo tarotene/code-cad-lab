@@ -7,7 +7,8 @@ accepted. This file is for agent operating instructions only.
 ## Environment
 
 - Python は [uv](https://docs.astral.sh/uv/) で管理する。`uv sync` で環境を作り、スクリプトは `uv run` で実行する。依存を足すときは `uv add`(開発用は `uv add --dev`)で、`uv.lock` ごとコミットする。
-- build123d は 0.x で、マイナー版ごとに破壊的変更が入る。上げるときは、リリースノートの API の変更を読んでから上げる。
+- build123d は 0.x で、マイナー版ごとに破壊的変更が入る。`pyproject.toml` では完全一致で pin している(`docs/adr/` の裁定)。上げるときは、リリースノートの API の変更を読み、`uv run lab check --all` と `uv run pytest` が通ることを確かめてから上げる。
+- 部品を足す・直すときは、`uv run lab check <部品>` で有効性・干渉・造形範囲を確かめてから、書き出す。同じ検査が CI で `--all` で走る。
 
 ## Public repository
 

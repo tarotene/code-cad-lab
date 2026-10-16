@@ -1,9 +1,37 @@
 [project]
-name = "build123d-playground"
+name = "code-cad-lab"
 version = "0.1.0"
-description = "Add your description here"
+description = "コードで部品を設計して FDM 3D プリンタで刷る PoC の作業場(build123d)"
 readme = "README.md"
-requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.13,<3.14"
 dependencies = [
-    "build123d>=0.10.0",
+    # 0.x はマイナー版ごとに破壊的変更が入るので、完全一致で pin する(ADR-0001)。
+    "build123d==0.13.0",
 ]
+
+[project.scripts]
+lab = "lab.cli:main"
+
+[dependency-groups]
+dev = [
+    "ocp_viewer",
+    "pytest>=9.1.1",
+    "ruff",
+    "watchfiles",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "lab"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "parts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
