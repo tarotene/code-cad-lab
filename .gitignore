@@ -15,3 +15,7 @@ wheels/
 *.stl
 *.obj
 *.dxf
+
+# Print outputs
+out/
+*.3mf
