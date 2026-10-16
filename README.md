@@ -14,11 +14,23 @@ uv sync
 
 ## Usage
 
-環境が動くことの確認:
+部品は `parts/<名前>.py` に 1 ファイル 1 部品で置き、`build(**params)` が build123d の形状を返す。操作は `lab` コマンドに集約している。
 
 ```bash
-uv run python -c "import build123d; print(build123d.__version__)"
+uv run lab list                      # 部品の一覧
+uv run lab check --all               # 有効性・Solid どうしの干渉・造形範囲を検査(異常なら終了コード 1)
+uv run lab export <部品>             # out/ に 3MF と STEP を書き出す
+uv run lab export <部品> --set clearance=0.2   # 引数を変えて書き出す
 ```
+
+保存のたびに表示を更新して試行錯誤する:
+
+```bash
+uv run lab viewer                    # 別の端末で常駐させ、ブラウザで http://127.0.0.1:3939 を開く
+uv run lab watch <部品>              # parts/ と src/ を見張り、保存のたびにビューアへ送る
+```
+
+ブラウザを先に開いておく。開く前に送った形状は表示に残らない。
 
 ## Scope
 
@@ -30,7 +42,12 @@ uv run python -c "import build123d; print(build123d.__version__)"
 
 ```bash
 uv sync
+uv run ruff check . && uv run ruff format --check .
+uv run pytest
+uv run lab check --all
 ```
+
+設計の道具を選んだ根拠(比較表と裁定)は `docs/` にある。
 
 ## License
 

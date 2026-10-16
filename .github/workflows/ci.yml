@@ -1,7 +1,8 @@
 name: CI
 
-# required check は集約 job `CI passed` 1 本(ADR-591 D1)。この段の job は、依存の lock が
-# 現在の pyproject と食い違っていないことを確かめるだけ。部品・検査・テストは次段で足す。
+# 全部品を実行して、検査が通り 3MF/STEP が書き出せることを確かめる。
+# `CI passed` は quality ruleset が必須にする集約 job(個々の job 名を ruleset に
+# 焼き込まず、job を足しても ruleset を書き換えなくて済むようにする)。
 on:
   pull_request:
   push:
@@ -25,8 +26,22 @@ jobs:
 
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
-      - name: Lockfile is up to date
-        run: uv lock --check
+      - name: Sync (lockfile must be up to date)
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Check every part
+        run: uv run lab check --all
+
+      - name: Export every part
+        run: uv run lab export --all
 
   ci-passed:
     name: CI passed
