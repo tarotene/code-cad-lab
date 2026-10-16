@@ -27,8 +27,13 @@ def export_all(
 
     path_3mf = out_dir / f"{name}.3mf"
     mesher = Mesher()
+    # Compound をそのまま渡すと、入れ子の子ごとに 1 つのメッシュ(= スライサー上の 1 オブジェクト)
+    # にまとまり、本体と蓋のように離れた部品を別々に動かせない。Solid ごとに渡して、
+    # 1 部品 1 オブジェクトにする。
     mesher.add_shape(
-        shape, linear_deflection=linear_deflection, angular_deflection=angular_deflection
+        list(shape.solids()),
+        linear_deflection=linear_deflection,
+        angular_deflection=angular_deflection,
     )
     mesher.write(path_3mf)
     written.append(path_3mf)

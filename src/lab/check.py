@@ -57,10 +57,12 @@ def inspect_shape(
     box = shape.bounding_box()
     size = (box.size.X, box.size.Y, box.size.Z)
     solids = list(shape.solids())
+    # 入れ子の Compound の `volume` は直下の Solid しか数えない(build123d 0.13.0 で確認)ので、
+    # 体積と有効性は Solid ごとに調べて合わせる。
     report = Report(
         name=name,
-        valid=bool(shape.is_valid),
-        volume=float(shape.volume),
+        valid=bool(shape.is_valid) and all(bool(s.is_valid) for s in solids),
+        volume=sum(float(s.volume) for s in solids),
         size=size,
         z_min=float(box.min.Z),
         solids=len(solids),

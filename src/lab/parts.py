@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+from types import ModuleType
 
 from build123d import Shape
 
@@ -32,7 +33,8 @@ def part_names(root: Path | None = None) -> list[str]:
     return sorted(p.stem for p in parts_dir(root).glob("*.py") if not p.stem.startswith("_"))
 
 
-def build(name: str, params: dict[str, float] | None = None, root: Path | None = None) -> Shape:
+def load(name: str, root: Path | None = None) -> ModuleType:
+    """parts/<name>.py をモジュールとして読み込む(毎回読み直す)。"""
     path = parts_dir(root) / f"{name}.py"
     if not path.is_file():
         raise FileNotFoundError(f"部品 {name!r} がありません(parts/{name}.py)")
@@ -43,7 +45,14 @@ def build(name: str, params: dict[str, float] | None = None, root: Path | None =
     if spec is None or spec.loader is None:
         raise ImportError(f"{path} を読み込めません")
     module = importlib.util.module_from_spec(spec)
+    # dataclass などが自分のモジュールを sys.modules から引くので、実行の前に登録する
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
+    return module
+
+
+def build(name: str, params: dict[str, float] | None = None, root: Path | None = None) -> Shape:
+    module = load(name, root)
     if not hasattr(module, "build"):
         raise AttributeError(f"parts/{name}.py に build(**params) がありません")
     return module.build(**(params or {}))
