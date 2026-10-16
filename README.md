@@ -1,83 +1,37 @@
-# build123d Playground
+# code-cad-lab
 
-A workspace for experimenting with [build123d](https://github.com/gumyr/build123d), a Python CAD library.
+コードで部品を設計して FDM 3D プリンタで刷る PoC の作業場(build123d)。
 
-## Setup
+設計は Python のスクリプトで書き、3MF と STEP に書き出す。公共の工房の FDM 機に持ち込んで刷り、実物を測って、寸法の引数に戻す。試行錯誤の 1 周を短く保つことが、このリポジトリの目的。
 
-This project uses [uv](https://github.com/astral-sh/uv) for Python package management.
+## Install
 
-### Requirements
+[uv](https://docs.astral.sh/uv/) が要る。依存は `uv.lock` で固定されている。
 
-- Python 3.12+
-- uv
+```bash
+uv sync
+```
 
-### Installation
+## Usage
 
-All dependencies are already installed. To verify:
+環境が動くことの確認:
 
 ```bash
 uv run python -c "import build123d; print(build123d.__version__)"
 ```
 
-## Usage
+## Scope
 
-### Running Examples
+担うのは、build123d で書いた部品のスクリプトと、そこから書き出す 3MF・STEP、印刷に使う機種・材料のプロファイル、公差の実測値、そして設計の道具(CAD ライブラリ・ビューア・スライサー)を選んだ根拠の調査と裁定。
 
-Run the example script:
+担わないのは次の 3 つ。工房の利用情報(施設名・料金・予約・資格)は、公開できない私的な記録の責務。CAD ライブラリやビューア自体の開発は、それぞれの upstream の責務。3D プリンタ本体の運用やファームウェア、量産は、関連するがここでは扱わない。
 
-```bash
-uv run python example.py
-```
-
-This creates a box with a cylindrical hole and exports it as `box_with_hole.step`.
-
-### Running Scripts
-
-Use `uv run` to execute Python scripts in the virtual environment:
+## Development
 
 ```bash
-uv run python your_script.py
+uv sync
 ```
 
-### Interactive Session
+## License
 
-Start an IPython session with build123d:
-
-```bash
-uv run ipython
-```
-
-Then in IPython:
-
-```python
-from build123d import *
-
-# Create shapes interactively
-with BuildPart() as part:
-    Box(10, 10, 10)
-```
-
-## Project Structure
-
-```
-build123d-playground/
-├── .venv/              # Virtual environment (managed by uv)
-├── .python-version     # Python version specification
-├── pyproject.toml      # Project configuration and dependencies
-├── uv.lock            # Dependency lock file
-├── example.py         # Example CAD model
-└── README.md          # This file
-```
-
-## Dependencies
-
-- build123d: CAD modeling library
-- IPython: Interactive Python shell (included with build123d)
-- vtk: 3D visualization
-- And other dependencies required by build123d
-
-## Resources
-
-- [build123d Documentation](https://build123d.readthedocs.io/)
-- [build123d GitHub](https://github.com/gumyr/build123d)
-- [build123d Examples](https://github.com/gumyr/build123d/tree/dev/examples)
+MIT — [LICENSE](LICENSE)
