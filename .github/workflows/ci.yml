@@ -43,10 +43,25 @@ jobs:
       - name: Export every part
         run: uv run lab export --all
 
+  docs:
+    name: API docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - uses: tarotene/dotfiles/.github/actions/docs-python@main
+        with:
+          # requires-python が >=3.13,<3.14 なので、既定の '3.x'(最新)では
+          # `pip install -e .` が落ちる。
+          python-version: '3.13'
+          upload: 'false'
+
   ci-passed:
     name: CI passed
     if: always()
-    needs: [check]
+    needs: [check, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled

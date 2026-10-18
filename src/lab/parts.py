@@ -1,6 +1,6 @@
-"""parts/<name>.py を読み込み、build(**params) を呼んで形状を得る。
+"""parts/<name>.py を読み込み、``build(**params)`` を呼んで形状を得る。
 
-部品はパッケージではなく 1 ファイル 1 部品のスクリプトで、`build(**params)` が
+部品はパッケージではなく 1 ファイル 1 部品のスクリプトで、``build(**params)`` が
 build123d の Shape(Part / Compound)を返す。部品どうしの import(プレートが各部品を
 並べる等)のため、読み込み中は parts/ を sys.path に足す。
 """
