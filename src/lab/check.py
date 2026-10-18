@@ -7,8 +7,6 @@
 - 外形が造形範囲(bed)に収まらない
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from itertools import combinations
 
