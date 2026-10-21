@@ -1,4 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": ["tarotene/dotfiles の共有 preset を extends する。更新の方針は preset 側を参照"],
   "extends": ["github>tarotene/dotfiles//renovate/policy"]
 }
