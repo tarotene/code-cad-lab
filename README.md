@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="docs/assets/readme-banner.png"
+       alt="Cartoon illustration of a 3D printer, standing for the parts this repository designs in code and prints, by Irasutoya"
+       width="240">
+</p>
+
 # code-cad-lab
 
 コードで部品を設計して FDM 3D プリンタで刷る PoC の作業場(build123d)。
@@ -52,3 +58,9 @@ uv run lab check --all
 ## License
 
 MIT — [LICENSE](LICENSE)
+
+The banner illustration ([`docs/assets/readme-banner.png`](docs/assets/readme-banner.png))
+is by [Irasutoya](https://www.irasutoya.com/)
+([source page](https://www.irasutoya.com/2014/10/3d.html)) and is
+**not** covered by this repository's license; it is used under the
+[Irasutoya terms of use](https://www.irasutoya.com/p/terms.html).
