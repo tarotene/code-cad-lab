@@ -141,7 +141,7 @@ def cmd_viewer(args: argparse.Namespace) -> int:
 
 
 def watch_paths(root: Path) -> list[Path]:
-    """保存を見張る場所。`parts/` と、あれば `src/`(部品が import する自前のコード)。"""
+    """保存を見張る場所。``parts/`` と、あれば ``src/`` (部品が import する自前のコード)。"""
     return [p for p in (root / "parts", root / "src") if p.is_dir()]
 
 
