@@ -14,6 +14,8 @@ from types import ModuleType
 
 from build123d import Shape
 
+from .references import Reference
+
 
 def project_root(start: Path | None = None) -> Path:
     """pyproject.toml と parts/ を持つ最も近い祖先ディレクトリ。"""
@@ -56,3 +58,13 @@ def build(name: str, params: dict[str, float] | None = None, root: Path | None =
     if not hasattr(module, "build"):
         raise AttributeError(f"parts/{name}.py に build(**params) がありません")
     return module.build(**(params or {}))
+
+
+def references(
+    name: str, params: dict[str, float] | None = None, root: Path | None = None
+) -> list[Reference]:
+    """部品が `references(**params)` で宣言した、参照の STEP の一覧。宣言が無ければ空。"""
+    module = load(name, root)
+    if not hasattr(module, "references"):
+        return []
+    return list(module.references(**(params or {})))

@@ -20,6 +20,29 @@ uv run lab check --all --printer prusa-core-one-l   # 別の機種の造形範�
 
 有効性・Solid どうしの干渉・造形範囲を調べる。異常なら終了コード 1。`--printer` で選べる機種と造形範囲は `src/lab/printers.py` の表にあり、値の根拠は `docs/printers/<機種>.md` にある。既定は `bambu-p1s-x1`。
 
+### 外部の STEP と突き合わせる
+
+基板や筐体のように、別の CAD が作った形(STEP)に合わせて作る部品は、その STEP を**参照形状**として突き合わせる。部品のモジュールに `references(**params)` を足し、`lab.references.Reference` の一覧を返す(`build` と同じ引数を受ける)。
+
+```python
+from build123d import Location
+from lab.references import Reference
+
+
+def references(gap: float = 0.5):
+    return [Reference("board", "BOARD_STEP", clearance=gap, location=Location((0, 0, 1.6)))]
+```
+
+```bash
+BOARD_STEP=~/cad/board.step uv run lab check my_part
+```
+
+- 参照の STEP は git に入れない(`.gitignore` が `*.step` を除く)。パスは `Reference.env` の環境変数で渡す。元データの所在と版は、その部品の文書に書く。
+- 調べるのは、部品と参照の共通部分の体積(許容値を超えると干渉)と、最小のすきま(`clearance` に足りないと NG)。アセンブリの STEP は Solid ごとに調べ、外接ボックスで近いものだけを測る。
+- 単位は OCCT が mm に換算して読む。原点と向きは STEP を作った CAD のもので、そのまま部品の座標系に置かれる。ずれるときは `location` で合わせる(`Location((x, y, z))` または `Location((x, y, z), (rx, ry, rz))`)。
+- 参照に触れてよい部分(基板の取付穴に当てる座面など)は、`seats` にその領域の形状を渡す。すきまは部品から `seats` を除いて測る。干渉の検査は `seats` の中でも効くので、食い込めば NG になる。
+- 環境変数が未設定なら、その参照は飛ばして出力に `SKIPPED` と残す(終了コードは変えない)。STEP を持たない CI では、これで `lab check --all` が通る。手元で STEP があるはずのときは `--require-references` を付けると、飛ばさずに NG にする。環境変数が設定されているのにファイルが無い・読めないときは、設定の誤りなので常に NG。
+
 ## 3. 書き出して、家でスライスして確かめる
 
 ```bash
