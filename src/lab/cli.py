@@ -12,6 +12,7 @@ uv run lab slice <部品> | --all [--printer prusa-core-one-l]   # 機種のス�
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import shlex
 import sys
@@ -37,6 +38,17 @@ def _parse_sets(pairs: list[str]) -> dict[str, float]:
     return params
 
 
+def _require_viewer(*modules: str) -> None:
+    """show / watch / viewer が使う依存(extra `viewer`)が無ければ、入れ方を言って止まる。"""
+    missing = [m for m in modules if importlib.util.find_spec(m) is None]
+    if missing:
+        raise SystemExit(
+            f"{', '.join(missing)} が入っていません。`lab show` / `watch` / `viewer` には "
+            "extra `viewer` が要ります(例: `uv add 'code-cad-lab[viewer]'`)。"
+            "検査と書き出し(`check` / `export` / `slice`)には要りません"
+        )
+
+
 def _targets(args: argparse.Namespace) -> list[str]:
     if args.all:
         if args.name or args.set:
@@ -54,7 +66,8 @@ def cmd_list(_: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
-    from ocp_viewer import show  # 開発用の依存。show/watch/viewer 以外では読み込まない
+    _require_viewer("ocp_viewer")
+    from ocp_viewer import show  # extra `viewer`。show/watch/viewer 以外では読み込まない
 
     shape = parts.build(args.name, _parse_sets(args.set))
     show(shape, names=[args.name])
@@ -123,10 +136,17 @@ def cmd_slice(args: argparse.Namespace) -> int:
 
 
 def cmd_viewer(args: argparse.Namespace) -> int:
+    _require_viewer("ocp_viewer")
     os.execvp(sys.executable, [sys.executable, "-m", "ocp_viewer", *args.viewer_args])
 
 
+def watch_paths(root: Path) -> list[Path]:
+    """保存を見張る場所。`parts/` と、あれば `src/`(部品が import する自前のコード)。"""
+    return [p for p in (root / "parts", root / "src") if p.is_dir()]
+
+
 def cmd_watch(args: argparse.Namespace) -> int:
+    _require_viewer("ocp_viewer", "watchfiles")
     from watchfiles import run_process
 
     root = parts.project_root()
@@ -134,8 +154,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
     for pair in args.set:
         command += ["--set", pair]
     run_process(
-        root / "parts",
-        root / "src",
+        *watch_paths(root),
         target=shlex.join(command),
         target_type="command",
     )
