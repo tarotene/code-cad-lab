@@ -16,5 +16,8 @@ lab API
 .. automodule:: lab.printers
    :members:
 
+.. automodule:: lab.references
+   :members:
+
 .. automodule:: lab.slice
    :members:

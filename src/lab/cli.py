@@ -4,7 +4,7 @@ uv run lab list
 uv run lab viewer                     # ビューアを常駐させる(別の端末で)
 uv run lab watch <部品>               # 保存のたびにビューアへ送る
 uv run lab show <部品> [--set clearance=0.2]
-uv run lab check <部品> | --all [--printer prusa-core-one-l]
+uv run lab check <部品> | --all [--printer prusa-core-one-l] [--require-references]
 uv run lab export <部品> | --all [--out out]
 uv run lab slice <部品> | --all [--out out]   # Bambu Studio の CLI で予測時間と重さを出す
 """
@@ -66,7 +66,13 @@ def cmd_check(args: argparse.Namespace) -> int:
     bed = PRINTERS[args.printer].bed
     failed = 0
     for name in _targets(args):
-        report = inspect_shape(name, parts.build(name, params), bed=bed)
+        report = inspect_shape(
+            name,
+            parts.build(name, params),
+            bed=bed,
+            references=parts.references(name, params),
+            require_references=args.require_references,
+        )
         print("\n".join(report.lines()))
         failed += 0 if report.ok else 1
     return 1 if failed else 0
@@ -154,6 +160,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=sorted(PRINTERS),
         default=DEFAULT_PRINTER,
         help=f"造形範囲を取る機種(docs/printers/)。既定 {DEFAULT_PRINTER}",
+    )
+    p.add_argument(
+        "--require-references",
+        action="store_true",
+        help="参照の STEP の環境変数が未設定なら、飛ばさずに失敗にする",
     )
     p.set_defaults(func=cmd_check)
 

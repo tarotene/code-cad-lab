@@ -27,6 +27,7 @@ doctest_global_setup = "from lab import *"
 # intersphinx では結べない。
 nitpick_ignore = [
     ("py:class", "build123d.topology.shape_core.Shape"),
+    ("py:class", "build123d.geometry.Location"),
 ]
 
 html_theme = "alabaster"
