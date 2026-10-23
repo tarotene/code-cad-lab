@@ -11,15 +11,22 @@ dependencies = [
     "build123d==0.13.0",
 ]
 
+[project.optional-dependencies]
+# lab show / watch / viewer だけが使う。検査と書き出しには要らないので、別のリポジトリから
+# 使うときは `code-cad-lab[viewer]` と書いたときだけ入る(docs/consuming.md)。
+viewer = [
+    "ocp_viewer",
+    "watchfiles",
+]
+
 [project.scripts]
 lab = "lab.cli:main"
 
 [dependency-groups]
 dev = [
-    "ocp_viewer",
+    "code-cad-lab[viewer]",
     "pytest>=9.1.1",
     "ruff",
-    "watchfiles",
 ]
 
 [build-system]

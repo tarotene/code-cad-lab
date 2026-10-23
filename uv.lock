@@ -190,23 +190,32 @@ dependencies = [
     { name = "build123d" },
 ]
 
-[package.dev-dependencies]
-dev = [
+[package.optional-dependencies]
+viewer = [
     { name = "ocp-viewer" },
-    { name = "pytest" },
-    { name = "ruff" },
     { name = "watchfiles" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "code-cad-lab", extra = ["viewer"] },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
 [package.metadata]
-requires-dist = [{ name = "build123d", specifier = "==0.13.0" }]
+requires-dist = [
+    { name = "build123d", specifier = "==0.13.0" },
+    { name = "ocp-viewer", marker = "extra == 'viewer'" },
+    { name = "watchfiles", marker = "extra == 'viewer'" },
+]
+provides-extras = ["viewer"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "ocp-viewer" },
+    { name = "code-cad-lab", extras = ["viewer"] },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "ruff" },
-    { name = "watchfiles" },
 ]
 
 [[package]]
