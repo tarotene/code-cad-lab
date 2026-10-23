@@ -1,4 +1,4 @@
-# ADR-0000 — Prusa の機種のスライスに PrusaSlicer の CLI を採り、スライサーを機種に付ける
+# ADR-27 — Prusa の機種のスライスに PrusaSlicer の CLI を採り、スライサーを機種に付ける
 
 - 状態: 採用
 - 日付: 2026-10-23

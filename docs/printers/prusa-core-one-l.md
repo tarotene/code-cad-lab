@@ -63,7 +63,7 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 
 ## ツールの確認(スライサー)
 
-- PrusaSlicer 2.9.6(nixpkgs)の CLI で、書き出した 3MF のスライスが通る(2026-10-23)。同梱のプリセット(`Prusa CORE One L 0.4 nozzle`、`0.20mm SPEED @COREONEL 0.4`、`Prusament PLA @COREONE`)を、`lab slice --printer prusa-core-one-l` が datadir 経由で渡す。判断の根拠は [ADR-0002](../adr/0000-prusaslicer-for-prusa-printers.md)。
+- PrusaSlicer 2.9.6(nixpkgs)の CLI で、書き出した 3MF のスライスが通る(2026-10-23)。同梱のプリセット(`Prusa CORE One L 0.4 nozzle`、`0.20mm SPEED @COREONEL 0.4`、`Prusament PLA @COREONE`)を、`lab slice --printer prusa-core-one-l` が datadir 経由で渡す。判断の根拠は [ADR-27](../adr/27-prusaslicer-for-prusa-printers.md)。
 - プレート 1 枚(`plate_pico_v1`、8 部品)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。同じプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
 - 表示の無い環境(`DISPLAY` と `WAYLAND_DISPLAY` を外した状態)でも、CLI は G-code を出す。
 - 造形範囲の外にある部品は、PrusaSlicer が終了コード 0 で何も出さない(`All objects are outside of the print volume.`)。`lab slice` は、G-code が無ければ失敗として報告する。
