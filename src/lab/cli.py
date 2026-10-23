@@ -6,7 +6,7 @@ uv run lab watch <部品>               # 保存のたびにビューアへ送�
 uv run lab show <部品> [--set clearance=0.2]
 uv run lab check <部品> | --all [--printer prusa-core-one-l] [--require-references]
 uv run lab export <部品> | --all [--out out]
-uv run lab slice <部品> | --all [--out out]   # Bambu Studio の CLI で予測時間と重さを出す
+uv run lab slice <部品> | --all [--printer prusa-core-one-l]   # 機種のスライサーで時間と重さを出す
 """
 
 from __future__ import annotations
@@ -94,10 +94,12 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def cmd_slice(args: argparse.Namespace) -> int:
-    version = slicer.installed_version()
-    if version is not None and version != slicer.EXPECTED_VERSION:
+    printer = PRINTERS[args.printer]
+    version = slicer.installed_version(printer)
+    if version is not None and version != slicer.expected_version(printer):
         print(
-            f"警告: Bambu Studio {version} です(確かめた版は {slicer.EXPECTED_VERSION})",
+            f"警告: {slicer.slicer_label(printer)} {version} です"
+            f"(確かめた版は {slicer.expected_version(printer)})",
             file=sys.stderr,
         )
     params = _parse_sets(args.set)
@@ -109,7 +111,8 @@ def cmd_slice(args: argparse.Namespace) -> int:
                 three_mf,
                 out,
                 name,
-                printer=args.printer,
+                printer,
+                printer_preset=args.printer_preset,
                 process=args.process,
                 filament=args.filament,
             )
@@ -178,14 +181,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--stl", action="store_true", help="STL も書く")
     p.set_defaults(func=cmd_export)
 
-    p = sub.add_parser("slice", help="書き出して Bambu Studio でスライスし、時間と重さを出す")
+    p = sub.add_parser("slice", help="書き出して機種のスライサーでスライスし、時間と重さを出す")
     p.add_argument("name", nargs="?")
     p.add_argument("--all", action="store_true")
     p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE")
     p.add_argument("--out", default="out")
-    p.add_argument("--printer", default=slicer.DEFAULT_PRINTER)
-    p.add_argument("--process", default=slicer.DEFAULT_PROCESS)
-    p.add_argument("--filament", default=slicer.DEFAULT_FILAMENT)
+    p.add_argument(
+        "--printer",
+        choices=sorted(PRINTERS),
+        default=DEFAULT_PRINTER,
+        help=f"機種(docs/printers/)。スライサーとプリセットは機種で決まる。既定 {DEFAULT_PRINTER}",
+    )
+    p.add_argument("--printer-preset", help="スライサーの機種プリセットの名前(既定は機種の表)")
+    p.add_argument("--process", help="スライサーの工程プリセットの名前(既定は機種の表)")
+    p.add_argument("--filament", help="スライサーの材料プリセットの名前(既定は機種の表)")
     p.set_defaults(func=cmd_slice)
 
     p = sub.add_parser("viewer", help="ビューアを常駐させる")

@@ -49,13 +49,17 @@ BOARD_STEP=~/cad/board.step uv run lab check my_part
 uv run lab export plate_pico_v1     # out/plate_pico_v1.3mf と .step
 ```
 
-CLI で予測時間と材料の重さだけ見るなら、書き出しからスライスまで 1 本で通せる(Bambu Studio の導入が要る。導入は dotfiles の宣言で行う):
+CLI で予測時間と材料の重さだけ見るなら、書き出しからスライスまで 1 本で通せる。スライサーは機種(`--printer`)が決めるので、機種の組み合わせを間違えることはない(導入は dotfiles の宣言、または `nix shell nixpkgs#prusa-slicer` で行う):
 
 ```bash
-uv run lab slice plate_pico_v1      # 既定は P1S 0.4 nozzle / 0.20mm Standard / Bambu PLA Basic
+uv run lab slice plate_pico_v1                              # bambu-p1s-x1: Bambu Studio。P1S 0.4 nozzle / 0.20mm Standard / Bambu PLA Basic
+uv run lab slice plate_pico_v1 --printer prusa-core-one-l   # PrusaSlicer。CORE One L 0.4 nozzle / 0.20mm SPEED / Prusament PLA
 ```
 
-Bambu Studio の CLI は、渡すプリセットの JSON の `inherits` を解決しない。`lab slice` は、インストール済みの Bambu Studio のプリセットを実行時に読み、GUI と同じ意味(親 → `include` → 子の順に重ねる)で解決した JSON を `out/presets/` に作ってから CLI に渡す。プリセットの実体はこのリポジトリに置かない。場所は環境変数 `BAMBU_PROFILES`、起動コマンドは `BAMBU_STUDIO` で上書きできる。
+プリセットの名前は `--printer-preset` / `--process` / `--filament` で変えられる(既定は `src/lab/printers.py` の表)。プリセットの実体はどちらのスライサーのものもこのリポジトリに置かず、インストール済みのスライサーから実行時に読む。
+
+- **Bambu Studio**: CLI は、渡すプリセットの JSON の `inherits` を解決しない。`lab slice` が、GUI と同じ意味(親 → `include` → 子の順に重ねる)で解決した JSON を `out/presets/` に作ってから CLI に渡す。プリセットの場所は環境変数 `BAMBU_PROFILES`、起動コマンドは `BAMBU_STUDIO` で上書きできる。成果物は `out/<部品>.sliced.3mf`。
+- **PrusaSlicer**: CLI が `inherits` を自分で解決するので、`lab slice` は `out/prusa-datadir/` に、同梱の `vendor/<ベンダー>.ini` の写しと、そのモデルを有効にする `PrusaSlicer.ini` だけを作って `--datadir` に渡す(GUI の設定は読み書きしない)。3MF の座標は原点まわりなので、ベッドの中央へ置く(`--center`)。時間と重さは、テキストの G-code(`--no-binary-gcode`)の統計の行から読む。成果物は `out/<部品>.gcode`。起動コマンドは環境変数 `PRUSA_SLICER`、プロファイルの場所は `PRUSA_PROFILES` で上書きできる。配置できないとき(造形範囲の外)、PrusaSlicer は終了コード 0 で何も出さないので、G-code が無ければ失敗として報告する。
 
 `out/` の 3MF を、家の Bambu Studio(機種は工房の機種、材料は PLA)で開く。確かめること:
 

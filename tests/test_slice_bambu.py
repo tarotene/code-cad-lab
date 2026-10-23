@@ -9,7 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from lab import slice as slicer
+from lab import slice_bambu as slicer
+from lab.printers import PRINTERS
+from lab.slice_common import SliceResult
 
 
 def write(profiles: Path, kind: str, name: str, data: dict) -> None:
@@ -158,9 +160,9 @@ def test_missing_slice_info_is_not_guessed(tmp_path):
 
 
 def test_result_line_says_unknown_when_unknown(tmp_path):
-    result = slicer.SliceResult("plate", None, None, tmp_path / "x.3mf")
+    result = SliceResult("plate", None, None, tmp_path / "x.3mf")
     assert result.line() == "plate: 予測時間 未取得、重さ 未取得"
-    known = slicer.SliceResult("plate", 3900, 9.5, tmp_path / "x.3mf")
+    known = SliceResult("plate", 3900, 9.5, tmp_path / "x.3mf")
     assert known.line() == "plate: 予測時間 1 時間 5 分、重さ 9.50 g"
 
 
@@ -169,7 +171,8 @@ def test_bundled_defaults_resolve_to_a_nonzero_density():
     # 実物のプリセット(インストール済みの Bambu Studio)で、重さが 0 g になる原因が解けることを見る。
     profiles = slicer.find_profiles_dir()
     assert profiles is not None
-    resolved = slicer.resolve_preset(profiles, "filament", slicer.DEFAULT_FILAMENT)
+    printer = PRINTERS["bambu-p1s-x1"]
+    resolved = slicer.resolve_preset(profiles, "filament", printer.filament)
     assert float(resolved["filament_density"][0]) > 0
-    slicer.resolve_preset(profiles, "machine", slicer.DEFAULT_PRINTER)
-    slicer.resolve_preset(profiles, "process", slicer.DEFAULT_PROCESS)
+    slicer.resolve_preset(profiles, "machine", printer.printer_preset)
+    slicer.resolve_preset(profiles, "process", printer.process)

@@ -21,3 +21,12 @@ lab API
 
 .. automodule:: lab.slice
    :members:
+
+.. automodule:: lab.slice_bambu
+   :members:
+
+.. automodule:: lab.slice_common
+   :members:
+
+.. automodule:: lab.slice_prusa
+   :members:
