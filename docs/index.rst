@@ -13,5 +13,8 @@ lab API
 .. automodule:: lab.parts
    :members:
 
+.. automodule:: lab.printers
+   :members:
+
 .. automodule:: lab.slice
    :members:

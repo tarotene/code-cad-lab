@@ -15,9 +15,10 @@ uv run lab watch pico_case   # parts/ と src/ を保存するたびにビュー
 
 ```bash
 uv run lab check --all
+uv run lab check --all --printer prusa-core-one-l   # 別の機種の造形範囲で調べる
 ```
 
-有効性・Solid どうしの干渉・造形範囲を調べる。異常なら終了コード 1。
+有効性・Solid どうしの干渉・造形範囲を調べる。異常なら終了コード 1。`--printer` で選べる機種と造形範囲は `src/lab/printers.py` の表にあり、値の根拠は `docs/printers/<機種>.md` にある。既定は `bambu-p1s-x1`。
 
 ## 3. 書き出して、家でスライスして確かめる
 

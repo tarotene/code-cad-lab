@@ -4,7 +4,7 @@ uv run lab list
 uv run lab viewer                     # ビューアを常駐させる(別の端末で)
 uv run lab watch <部品>               # 保存のたびにビューアへ送る
 uv run lab show <部品> [--set clearance=0.2]
-uv run lab check <部品> | --all
+uv run lab check <部品> | --all [--printer prusa-core-one-l]
 uv run lab export <部品> | --all [--out out]
 uv run lab slice <部品> | --all [--out out]   # Bambu Studio の CLI で予測時間と重さを出す
 """
@@ -21,6 +21,7 @@ from . import parts
 from . import slice as slicer
 from .check import inspect_shape
 from .export import export_all
+from .printers import DEFAULT_PRINTER, PRINTERS
 
 
 def _parse_sets(pairs: list[str]) -> dict[str, float]:
@@ -62,7 +63,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_check(args: argparse.Namespace) -> int:
     params = _parse_sets(args.set)
-    bed = (args.bed, args.bed, args.bed)
+    bed = PRINTERS[args.printer].bed
     failed = 0
     for name in _targets(args):
         report = inspect_shape(name, parts.build(name, params), bed=bed)
@@ -148,7 +149,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("name", nargs="?")
     p.add_argument("--all", action="store_true")
     p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE")
-    p.add_argument("--bed", type=float, default=256.0, help="造形範囲の一辺(mm)。既定 256")
+    p.add_argument(
+        "--printer",
+        choices=sorted(PRINTERS),
+        default=DEFAULT_PRINTER,
+        help=f"造形範囲を取る機種(docs/printers/)。既定 {DEFAULT_PRINTER}",
+    )
     p.set_defaults(func=cmd_check)
 
     p = sub.add_parser("export", help="3MF と STEP を書き出す")
