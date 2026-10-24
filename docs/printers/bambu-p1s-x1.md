@@ -35,7 +35,7 @@
 - 基板の面に沿う向きで、Pico と内壁の隙間(設計 0.3 mm)と、蓋の袖と外壁の隙間(設計 0.2 mm)が小さかった(余裕はわずか)。取付穴とピン(設計 0.15 mm)は、ちょうどよかった。
 - ノギスでの実測、USB と BOOTSEL の確認は、まだ(下の表)。
 
-内側の輪郭(壁の内側、袖の内側)は狭く、外側の輪郭(ピン、壁の外側)は太く出るのが FDM の典型で(出典: [Bambu Lab Wiki, 3D Prints Shrinkage](https://wiki.bambulab.com/en/knowledge-sharing/3d-prints-shrinkage)、取得 2026-10-24)、この結果と合う。
+内側の輪郭(壁の内側、袖の内側)が設計より狭く出ることは、冷えて縮むと寸法が小さくなり、穴が細ると書く資料と合う(出典: [Bambu Lab Wiki, 3D Prints Shrinkage](https://wiki.bambulab.com/en/knowledge-sharing/3d-prints-shrinkage)、取得 2026-10-24)。外側の輪郭(ピン、壁の外側)が設計より太く出るかは、この結果からは分からない。ノギスでの実測(下の表)で決める。
 
 ### 寸法の実測
 
