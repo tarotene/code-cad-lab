@@ -31,6 +31,10 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 - 材料(ESD PETG): 例は 3DXTech 3DXSTAT ESD PETG。炭素ナノチューブ入りで、表面抵抗は販売ページで 10^7〜10^9 Ω とされる(販売ページの記載で、実物の値は未確認)。ノズルは 230〜260 ℃ とされる(同じ販売ページの記載で、未確認)。導電性は刷る温度に依存するとされるので、**刷った設定と測った値は組で記録する**(下の表)。
 - 設計の目安: Bambu の機種と同じく、片側の隙間は 0〜0.2 mm の範囲で、はめ合いの種類で選ぶ。重要なはめ合いは、先に試し刷りをする(出典は `bambu-p1s-x1.md` と同じ。この機種での値は未実測)。
 
+## 寸法補正
+
+PrusaSlicer の補正は `xy_size_compensation` の 1 値で、物体全体を広げる(正)・狭める(負)。穴と外形は別々に補正できない。内側が設計より狭いなら負にすると穴が広がるが、外形も細る(PrusaSlicer version_2.9.6、`PrintConfig.cpp` 3950〜3958 行)。値は、実測から決めて機種の表(`src/lab/printers.py` の `PrusaCompensation`)に入れる([ADR-0000](../adr/0000-xy-compensation-in-slicer.md))。既定は 0。
+
 ## 公差の実測値(枠)
 
 値は空。刷って測る作業は [#24](https://github.com/tarotene/code-cad-lab/issues/24) で行う。プレートは `parts/plate_pico_v2.py`(本体 1 個と、`fit` 0.2 / 0.3 / 0.4 mm の蓋 3 枚。蓋の外側の面の点の数 1 / 2 / 3 で見分ける)を使う。はめ合いの考え方と、1 周目の結果は [`bambu-p1s-x1.md`](bambu-p1s-x1.md) に書いた。
