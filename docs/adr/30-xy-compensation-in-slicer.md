@@ -44,7 +44,7 @@
 ### 3. 実際の確かめ(2026-10-24)
 
 - Bambu Studio 2.8.2.61: `plate_pico_v2` を、補正値 0 と `xy_hole` = 0.2・`xy_contour` = −0.2 でスライスした。出力の 3MF の `Metadata/project_settings.config` に、指定した値がそのまま入った。重さは 13.61 g から 12.29 g に減り、値が形に効いている。
-- PrusaSlicer 2.9.6: 旗の名前は、明示の CLI 名が無いオプションに「キーの下線をハイフンに替えたものを使う」規則(`src/libslic3r/Config.hpp` 2525 行)から、`--xy-size-compensation`。実機でのスライスと G-code への反映は、確かめ次第この行を書き直す(`tests/test_slice_prusa.py` の `test_real_slice_applies_the_compensation_and_it_changes_the_material` が、PrusaSlicer のある環境で確かめる)。
+- PrusaSlicer 2.9.6(nixpkgs): 旗の名前は、明示の CLI 名が無いオプションに「キーの下線をハイフンに替えたものを使う」規則(`src/libslic3r/Config.hpp` 2525 行)から `--xy-size-compensation`。`prusa-slicer --help-fff` にも、同じ説明文で出る。`plate_pico_v2` を `xy_size` = 0 / −0.1 / +0.1 でスライスすると、G-code の設定の記録(`; xy_size_compensation = …`)に指定した値が入り、重さは 13.63 / 12.72 / 14.54 g と単調に変わる。0 の重さは、使用量 4570.42 mm と密度 1.24 からの検算(13.63 g)と一致する。同梱の `PrusaResearch.ini` の `xy_size_compensation` は 0 だけ。
 
 ## 結果
 

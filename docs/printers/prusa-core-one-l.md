@@ -88,7 +88,7 @@ PrusaSlicer の補正は `xy_size_compensation` の 1 値で、物体全体を�
 ## ツールの確認(スライサー)
 
 - PrusaSlicer 2.9.6(nixpkgs)の CLI で、書き出した 3MF のスライスが通る(2026-10-23)。同梱のプリセット(`Prusa CORE One L 0.4 nozzle`、`0.20mm SPEED @COREONEL 0.4`、`Prusament PLA @COREONE`)を、`lab slice --printer prusa-core-one-l` が datadir 経由で渡す。判断の根拠は [ADR-27](../adr/27-prusaslicer-for-prusa-printers.md)。
-- 1 周目のプレート 1 枚(`plate_pico_v1`、試験片入りで 8 部品、削除済み)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(2026-10-23、`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6。2 周目の `plate_pico_v2` は、この機体に PrusaSlicer が無いので未測定)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。同じ 1 周目のプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
+- 1 周目のプレート 1 枚(`plate_pico_v1`、試験片入りで 8 部品、削除済み)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(2026-10-23、`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6。)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。2 周目のプレート(`plate_pico_v2`、本体 1 個と蓋 3 枚)は、予測時間 25 分(normal mode の 25m 36s)、重さ 13.63 g だった(同じコマンド、PrusaSlicer 2.9.6、2026-10-24)。使用量 4570.42 mm と密度 1.24 からの検算(13.63 g)と一致する。1 周目のプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
 - 表示の無い環境(`DISPLAY` と `WAYLAND_DISPLAY` を外した状態)でも、CLI は G-code を出す。
 - 造形範囲の外にある部品は、PrusaSlicer が終了コード 0 で何も出さない(`All objects are outside of the print volume.`)。`lab slice` は、G-code が無ければ失敗として報告する。
 - 実際の工房の PC の PrusaSlicer の版: 未確認。
