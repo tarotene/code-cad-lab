@@ -71,7 +71,7 @@ uv run lab slice plate_pico_v2 --printer prusa-core-one-l   # PrusaSlicer。CORE
 
 ### 寸法補正
 
-機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-0000](adr/0000-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`)。
+機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-30](adr/30-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`)。
 
 - **Bambu Studio**: `xy_hole_compensation`(穴。正で大きくなる)と `xy_contour_compensation`(外形。正で大きくなる)。`lab slice` が書き出す `out/<部品>.sliced.3mf` の設定に、表の値が入る(Bambu Studio 2.8.2.61 で読み戻した)。GUI でプロジェクトを開き直して保存し直すときは、Process の Quality にある「X-Y hole compensation」「X-Y contour compensation」が表の値であることと、「Auto circle contour-hole compensation」が切れていることを確かめる(自動の円補正が有効だと、手動の 2 値は 0 に戻される)。画面の並びは未確認。
 - **PrusaSlicer**: `xy_size_compensation` の 1 値(Advanced、Expert モード)。物体全体を広げる(正)・狭める(負)ので、穴と外形は別々に補正できない。

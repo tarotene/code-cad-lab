@@ -33,7 +33,7 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 
 ## 寸法補正
 
-PrusaSlicer の補正は `xy_size_compensation` の 1 値で、物体全体を広げる(正)・狭める(負)。穴と外形は別々に補正できない。内側が設計より狭いなら負にすると穴が広がるが、外形も細る(PrusaSlicer version_2.9.6、`PrintConfig.cpp` 3950〜3958 行)。値は、実測から決めて機種の表(`src/lab/printers.py` の `PrusaCompensation`)に入れる([ADR-0000](../adr/0000-xy-compensation-in-slicer.md))。既定は 0。
+PrusaSlicer の補正は `xy_size_compensation` の 1 値で、物体全体を広げる(正)・狭める(負)。穴と外形は別々に補正できない。内側が設計より狭いなら負にすると穴が広がるが、外形も細る(PrusaSlicer version_2.9.6、`PrintConfig.cpp` 3950〜3958 行)。値は、実測から決めて機種の表(`src/lab/printers.py` の `PrusaCompensation`)に入れる([ADR-30](../adr/30-xy-compensation-in-slicer.md))。既定は 0。
 
 ## 公差の実測値(枠)
 
