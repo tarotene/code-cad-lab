@@ -29,30 +29,50 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 - 材料(PLA): 同梱プロファイルの既定は `Prusament PLA @COREONE`(`Prusa CORE One L 0.4 nozzle` の `default_filament_profile`)。
 - 工程(PLA): 同梱プロファイルの既定は `0.20mm SPEED @COREONEL 0.4`(層の高さ 0.2 mm)。
 - 材料(ESD PETG): 例は 3DXTech 3DXSTAT ESD PETG。炭素ナノチューブ入りで、表面抵抗は販売ページで 10^7〜10^9 Ω とされる(販売ページの記載で、実物の値は未確認)。ノズルは 230〜260 ℃ とされる(同じ販売ページの記載で、未確認)。導電性は刷る温度に依存するとされるので、**刷った設定と測った値は組で記録する**(下の表)。
-- 設計の目安: Bambu の機種と同じく、片側の隙間は 0〜0.2 mm の範囲で、はめ合いの種類で選ぶ。重要なはめ合いは、先に小さな見本を刷って試す(出典は `bambu-p1s-x1.md` と同じ。この機種での値は未実測)。
+- 設計の目安: Bambu の機種と同じく、片側の隙間は 0〜0.2 mm の範囲で、はめ合いの種類で選ぶ。重要なはめ合いは、先に試し刷りをする(出典は `bambu-p1s-x1.md` と同じ。この機種での値は未実測)。
 
 ## 公差の実測値(枠)
 
-値は空。刷って測る作業は [#24](https://github.com/tarotene/code-cad-lab/issues/24) で行う。試験片は `parts/plate_pico_v1.py` のプレート(`fit` 0.1 / 0.2 / 0.3 mm の 3 対)を使う。
+値は空。刷って測る作業は [#24](https://github.com/tarotene/code-cad-lab/issues/24) で行う。プレートは `parts/plate_pico_v2.py`(本体 1 個と、`fit` 0.2 / 0.3 / 0.4 mm の蓋 3 枚。蓋の外側の面の点の数 1 / 2 / 3 で見分ける)を使う。はめ合いの考え方と、1 周目の結果は [`bambu-p1s-x1.md`](bambu-p1s-x1.md) に書いた。
 
 ### PLA
 
-| fit(mm) | 入る | 止まる(振っても外れない) | 外せる(割れずに) | 判定 |
-|---|---|---|---|---|
-| 0.1 | | | | |
-| 0.2 | | | | |
-| 0.3 | | | | |
+寸法の実測(ノギス、高さの中ほど。長い向き × 短い向き):
+
+| 箇所 | 設計値(mm) | 実測(mm) | ずれ(実測 − 設計) |
+|---|---|---|---|
+| 本体の内寸(内壁の間) | 51.6 × 21.6 | | |
+| 本体の外寸 | 54.8 × 24.8 | | |
+| 蓋の袖の内寸(`fit` 0.2 の蓋) | 55.2 × 25.2 | | |
+
+蓋 3 枚の判定(入る・止まる・外せるの定義は `bambu-p1s-x1.md`):
+
+| 蓋(点の数) | fit(mm) | 入る | 止まる | 外せる(割れずに) | Pico・USB・BOOTSEL | 判定 |
+|---|---|---|---|---|---|---|
+| 1 | 0.2 | | | | | |
+| 2 | 0.3 | | | | | |
+| 3 | 0.4 | | | | | |
 
 - 刷った日・材料の銘柄・ノズル径・設定(層の高さ、ノズル温度、ベッド温度):
 - 採用する `fit`:
 
 ### ESD PETG
 
-| fit(mm) | 入る | 止まる(振っても外れない) | 外せる(割れずに) | 判定 |
-|---|---|---|---|---|
-| 0.1 | | | | |
-| 0.2 | | | | |
-| 0.3 | | | | |
+寸法の実測(ノギス、高さの中ほど。長い向き × 短い向き):
+
+| 箇所 | 設計値(mm) | 実測(mm) | ずれ(実測 − 設計) |
+|---|---|---|---|
+| 本体の内寸(内壁の間) | 51.6 × 21.6 | | |
+| 本体の外寸 | 54.8 × 24.8 | | |
+| 蓋の袖の内寸(`fit` 0.2 の蓋) | 55.2 × 25.2 | | |
+
+蓋 3 枚の判定(入る・止まる・外せるの定義は `bambu-p1s-x1.md`):
+
+| 蓋(点の数) | fit(mm) | 入る | 止まる | 外せる(割れずに) | Pico・USB・BOOTSEL | 判定 |
+|---|---|---|---|---|---|---|
+| 1 | 0.2 | | | | | |
+| 2 | 0.3 | | | | | |
+| 3 | 0.4 | | | | | |
 
 | 刷った日 | 銘柄 | ノズル温度(℃) | ベッド温度(℃) | 表面抵抗(Ω) | 測り方 |
 |---|---|---|---|---|---|
@@ -64,7 +84,7 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 ## ツールの確認(スライサー)
 
 - PrusaSlicer 2.9.6(nixpkgs)の CLI で、書き出した 3MF のスライスが通る(2026-10-23)。同梱のプリセット(`Prusa CORE One L 0.4 nozzle`、`0.20mm SPEED @COREONEL 0.4`、`Prusament PLA @COREONE`)を、`lab slice --printer prusa-core-one-l` が datadir 経由で渡す。判断の根拠は [ADR-27](../adr/27-prusaslicer-for-prusa-printers.md)。
-- プレート 1 枚(`plate_pico_v1`、8 部品)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。同じプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
+- 1 周目のプレート 1 枚(`plate_pico_v1`、試験片入りで 8 部品、削除済み)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(2026-10-23、`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6。2 周目の `plate_pico_v2` は、この機体に PrusaSlicer が無いので未測定)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。同じ 1 周目のプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
 - 表示の無い環境(`DISPLAY` と `WAYLAND_DISPLAY` を外した状態)でも、CLI は G-code を出す。
 - 造形範囲の外にある部品は、PrusaSlicer が終了コード 0 で何も出さない(`All objects are outside of the print volume.`)。`lab slice` は、G-code が無ければ失敗として報告する。
 - 実際の工房の PC の PrusaSlicer の版: 未確認。

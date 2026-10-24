@@ -106,7 +106,7 @@ unshare -rn sh -c '
 
 ### `lab slice` の実機の確認(検算済み)
 
-2026-10-16、Linux 6.17.4 x86_64、Bambu Studio 2.8.2.61(Flathub、user 領域)、プレートは `plate_pico_v1`(8 部品)。Issue #4 の 3 点目。
+2026-10-16、Linux 6.17.4 x86_64、Bambu Studio 2.8.2.61(Flathub、user 領域)、プレートは `plate_pico_v1`(8 部品。試験片入りの 1 周目のプレートで、のちに `plate_pico_v2` へ置き換えて削除した)。Issue #4 の 3 点目。
 
 ```bash
 uv run lab slice plate_pico_v1        # 予測時間 24 分、重さ 9.90 g
