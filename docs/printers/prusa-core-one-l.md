@@ -31,6 +31,10 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 - 材料(ESD PETG): 例は 3DXTech 3DXSTAT ESD PETG。炭素ナノチューブ入りで、表面抵抗は販売ページで 10^7〜10^9 Ω とされる(販売ページの記載で、実物の値は未確認)。ノズルは 230〜260 ℃ とされる(同じ販売ページの記載で、未確認)。導電性は刷る温度に依存するとされるので、**刷った設定と測った値は組で記録する**(下の表)。
 - 設計の目安: Bambu の機種と同じく、片側の隙間は 0〜0.2 mm の範囲で、はめ合いの種類で選ぶ。重要なはめ合いは、先に試し刷りをする(出典は `bambu-p1s-x1.md` と同じ。この機種での値は未実測)。
 
+## 寸法補正
+
+PrusaSlicer の補正は `xy_size_compensation` の 1 値で、物体全体を広げる(正)・狭める(負)。穴と外形は別々に補正できない。内側が設計より狭いなら負にすると穴が広がるが、外形も細る(PrusaSlicer version_2.9.6、`PrintConfig.cpp` 3950〜3958 行)。値は、実測から決めて機種の表(`src/lab/printers.py` の `PrusaCompensation`)に入れる([ADR-30](../adr/30-xy-compensation-in-slicer.md))。既定は 0。
+
 ## 公差の実測値(枠)
 
 値は空。刷って測る作業は [#24](https://github.com/tarotene/code-cad-lab/issues/24) で行う。プレートは `parts/plate_pico_v2.py`(本体 1 個と、`fit` 0.2 / 0.3 / 0.4 mm の蓋 3 枚。蓋の外側の面の点の数 1 / 2 / 3 で見分ける)を使う。はめ合いの考え方と、1 周目の結果は [`bambu-p1s-x1.md`](bambu-p1s-x1.md) に書いた。
@@ -84,7 +88,7 @@ Prusa CORE One L(FDM 機)の、設計に効く値と、公差の実測値の枠�
 ## ツールの確認(スライサー)
 
 - PrusaSlicer 2.9.6(nixpkgs)の CLI で、書き出した 3MF のスライスが通る(2026-10-23)。同梱のプリセット(`Prusa CORE One L 0.4 nozzle`、`0.20mm SPEED @COREONEL 0.4`、`Prusament PLA @COREONE`)を、`lab slice --printer prusa-core-one-l` が datadir 経由で渡す。判断の根拠は [ADR-27](../adr/27-prusaslicer-for-prusa-printers.md)。
-- 1 周目のプレート 1 枚(`plate_pico_v1`、試験片入りで 8 部品、削除済み)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(2026-10-23、`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6。2 周目の `plate_pico_v2` は、この機体に PrusaSlicer が無いので未測定)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。同じ 1 周目のプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
+- 1 周目のプレート 1 枚(`plate_pico_v1`、試験片入りで 8 部品、削除済み)の予測時間は 20 分(標準モード。G-code の `estimated printing time (normal mode) = 20m 27s`)、重さは 9.96 g だった(2026-10-23、`uv run lab slice plate_pico_v1 --printer prusa-core-one-l`、PrusaSlicer 2.9.6。)。G-code の使用量 3339.32 mm(8.03 cm3)と密度 1.24(`Prusament PLA @COREONE`)からの検算(9.96 g)と一致する。2 周目のプレート(`plate_pico_v2`、本体 1 個と蓋 3 枚)は、予測時間 25 分(normal mode の 25m 36s)、重さ 13.63 g だった(同じコマンド、PrusaSlicer 2.9.6、2026-10-24)。使用量 4570.42 mm と密度 1.24 からの検算(13.63 g)と一致する。1 周目のプレートの Bambu Studio での値(24 分、9.90 g)とは、機種・プリセットが違うので比べられない。工房の機械の実際の設定での値とは限らない。
 - 表示の無い環境(`DISPLAY` と `WAYLAND_DISPLAY` を外した状態)でも、CLI は G-code を出す。
 - 造形範囲の外にある部品は、PrusaSlicer が終了コード 0 で何も出さない(`All objects are outside of the print volume.`)。`lab slice` は、G-code が無ければ失敗として報告する。
 - 実際の工房の PC の PrusaSlicer の版: 未確認。

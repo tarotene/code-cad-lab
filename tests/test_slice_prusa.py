@@ -5,6 +5,7 @@
 
 import re
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from build123d import Box, Pos
 from lab import slice as slicer
 from lab import slice_prusa as prusa
 from lab.export import export_all
-from lab.printers import PRINTERS
+from lab.printers import PRINTERS, PrusaCompensation
 from lab.slice_common import PresetError, SliceResult, SlicerNotFoundError
 
 INI = """\
@@ -128,6 +129,25 @@ def test_cli_arguments_follow_the_help_form(tmp_path):
     assert args[-1] == str(tmp_path / "plate.3mf")
 
 
+def test_compensation_is_passed_as_a_setting_flag(tmp_path):
+    def args_with(compensation):
+        return prusa.build_args(
+            tmp_path / "p.3mf",
+            tmp_path / "p.gcode",
+            tmp_path / "d",
+            printer_preset="P",
+            process="Q",
+            filament="F",
+            center=(1.0, 1.0),
+            compensation=compensation,
+        )
+
+    args = args_with(PrusaCompensation(xy_size=-0.1))
+    assert args[args.index("--xy-size-compensation") + 1] == "-0.1"
+    assert args.index("--xy-size-compensation") < args.index("--export-gcode")
+    assert "--xy-size-compensation" not in args_with(None)
+
+
 @pytest.mark.parametrize(
     ("text", "seconds"),
     [
@@ -184,6 +204,7 @@ def test_dispatch_uses_the_machine_defaults_and_centres_on_the_bed(monkeypatch, 
         "process": printer.process,
         "filament": printer.filament,
         "center": (150.0, 150.0),
+        "compensation": printer.compensation,
     }
     slicer.slice_3mf(tmp_path / "a.3mf", tmp_path, "a", printer, filament="Other PLA")
     assert calls["filament"] == "Other PLA"
@@ -203,6 +224,7 @@ def test_dispatch_sends_a_bambu_machine_to_bambu_studio(monkeypatch, tmp_path):
     printer = PRINTERS["bambu-p1s-x1"]
     slicer.slice_3mf(tmp_path / "a.3mf", tmp_path, "a", printer)
     assert seen["printer_preset"] == "Bambu Lab P1S 0.4 nozzle"
+    assert seen["compensation"] == printer.compensation
     assert "center" not in seen
 
 
@@ -263,6 +285,22 @@ def test_a_part_outside_the_bed_is_reported_not_silently_passed(tmp_path):
     printer = PRINTERS["prusa-core-one-l"]
     with pytest.raises(RuntimeError, match="失敗"):
         slicer.slice_3mf(three_mf, tmp_path, "tall", printer)
+
+
+@needs_prusa
+def test_real_slice_applies_the_compensation_and_it_changes_the_material(tmp_path):
+    # 設定が G-code の末尾の設定の記録に入り、物体が太ると材料も増える(= 実際に効いている)
+    shape = Pos(0, 0, 10) * Box(20, 20, 20)
+    three_mf = export_all(shape, tmp_path, "cube")[0]
+    printer = PRINTERS["prusa-core-one-l"]
+    plain = slicer.slice_3mf(three_mf, tmp_path, "plain", printer)
+    grown = slicer.slice_3mf(
+        three_mf, tmp_path, "grown", replace(printer, compensation=PrusaCompensation(xy_size=0.5))
+    )
+    text = grown.output.read_text(encoding="utf-8", errors="replace")
+    assert re.search(r"^; xy_size_compensation = 0\.5$", text, re.MULTILINE)
+    assert plain.grams is not None and grown.grams is not None
+    assert grown.grams > plain.grams
 
 
 def test_version_probe_is_none_without_a_slicer(monkeypatch):

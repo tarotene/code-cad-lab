@@ -70,7 +70,7 @@
 
 ### 組み合わせの単位
 
-寸法のずれは、機種だけでなく、ノズル径・造形の設定・材料の製品でも変わる。Bambu Studio 2.8.2.61 の同梱プリセットでは、縮み率(`filament_shrink`)と押し出し量の倍率(`filament_flow_ratio`)が材料の設定に、内側・外側の輪郭の寸法補正(`xy_hole_compensation` / `xy_contour_compensation`)が造形の設定にある。補正の既定値は、どちらも 0(`fdm_process_common.json`、2026-10-24 に読んだ)。穴の大きさや向きでずれが変わること、同じ機種でも 1 台ごとに少し違うことは、一般論としては知られているが、一次資料では確かめていない(未確認)。そのため、実測の表には、刷った機種(P1S か X1 か)を必ず記録する。
+寸法のずれは、機種だけでなく、ノズル径・造形の設定・材料の製品でも変わる。Bambu Studio 2.8.2.61 の同梱プリセットでは、縮み率(`filament_shrink`)と押し出し量の倍率(`filament_flow_ratio`)が材料の設定に、内側・外側の輪郭の寸法補正(`xy_hole_compensation` / `xy_contour_compensation`)が造形の設定にある。補正の既定値は、どちらも 0(`fdm_process_common.json`、2026-10-24 に読んだ)。補正値は、ノギスで測った実測から決めて、機種の表(`src/lab/printers.py` の `BambuCompensation`)に入れる([ADR-30](../adr/30-xy-compensation-in-slicer.md))。向きは、`xy_hole_compensation` の正の値で穴が大きくなり、`xy_contour_compensation` の正の値で外形が大きくなる(Bambu Studio v02.08.02.61、`PrintConfig.cpp` 6335〜6353 行)。内側が設計より狭いなら `xy_hole` を正に、外側が設計より太いなら `xy_contour` を負にする。穴の大きさや向きでずれが変わること、同じ機種でも 1 台ごとに少し違うことは、一般論としては知られているが、一次資料では確かめていない(未確認)。そのため、実測の表には、刷った機種(P1S か X1 か)を必ず記録する。
 
 ## ツールの確認(スライサー)
 
