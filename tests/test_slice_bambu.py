@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from lab import slice_bambu as slicer
-from lab.printers import PRINTERS
+from lab.printers import PRINTERS, BambuCompensation
 from lab.slice_common import SliceResult
 
 
@@ -116,6 +116,33 @@ def test_write_presets_writes_three_resolved_files(filaments, tmp_path):
     assert all(p.parent == out / "presets" for p in (machine, process, filament))
 
 
+def test_compensation_overrides_only_the_process_preset(filaments, tmp_path):
+    write(filaments, "machine", "m", {"from": "system"})
+    write(
+        filaments,
+        "process",
+        "p",
+        {"from": "system", "xy_hole_compensation": "0", "xy_contour_compensation": "0"},
+    )
+
+    def written(compensation):
+        paths = slicer.write_presets(
+            filaments, tmp_path / "out", printer="m", process="p", filament="leaf",
+            compensation=compensation,
+        )  # fmt: skip
+        return [json.loads(p.read_text(encoding="utf-8")) for p in paths]
+
+    machine, process, filament = written(BambuCompensation(xy_hole=0.1, xy_contour=-0.05))
+    assert process["xy_hole_compensation"] == "0.1"
+    assert process["xy_contour_compensation"] == "-0.05"
+    assert "xy_hole_compensation" not in machine and "xy_hole_compensation" not in filament
+    # 渡さなければ、プリセットの値のまま
+    assert written(None)[1]["xy_hole_compensation"] == "0"
+    # 0 を渡せば、プリセットの値が 0 以外でも 0 になる(機種の表が正本)
+    write(filaments, "process", "p", {"from": "system", "xy_hole_compensation": "0.3"})
+    assert written(BambuCompensation())[1]["xy_hole_compensation"] == "0"
+
+
 def test_cli_arguments_follow_the_wiki_form(tmp_path):
     args = slicer.build_args(
         tmp_path / "plate.3mf", tmp_path, "plate", Path("m.json"), Path("p.json"), Path("f.json")
@@ -175,4 +202,8 @@ def test_bundled_defaults_resolve_to_a_nonzero_density():
     resolved = slicer.resolve_preset(profiles, "filament", printer.filament)
     assert float(resolved["filament_density"][0]) > 0
     slicer.resolve_preset(profiles, "machine", printer.printer_preset)
-    slicer.resolve_preset(profiles, "process", printer.process)
+    process = slicer.resolve_preset(profiles, "process", printer.process)
+    # 機種の表の補正値が上書きするキーは、同梱の process の設定に実在する(名前の取り違えを防ぐ)
+    assert set(BambuCompensation().settings()) <= set(process)
+    # 手動の補正値は、自動の円補正が有効だと Bambu Studio に 0 へ戻される。同梱の既定は無効
+    assert process["enable_circle_compensation"] == "0"

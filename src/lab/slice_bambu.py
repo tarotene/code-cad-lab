@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
+from .printers import BambuCompensation
 from .slice_common import PresetError, SliceResult, SlicerNotFoundError
 
 APP_ID = "com.bambulab.BambuStudio"
@@ -97,18 +98,27 @@ def resolve_preset(profiles_dir: Path, kind: str, name: str) -> dict:
 
 
 def write_presets(
-    profiles_dir: Path, out_dir: Path, *, printer: str, process: str, filament: str
+    profiles_dir: Path,
+    out_dir: Path,
+    *,
+    printer: str,
+    process: str,
+    filament: str,
+    compensation: BambuCompensation | None = None,
 ) -> tuple[Path, Path, Path]:
-    """解決済みの 3 つのプリセットを out_dir/presets/ に書き、パスを返す。"""
+    """解決済みの 3 つのプリセットを out_dir/presets/ に書き、パスを返す。
+
+    `compensation` を渡すと、その寸法補正の値で process の同名のキーを上書きする(機種の表が正本)。
+    """
     target = out_dir / "presets"
     target.mkdir(parents=True, exist_ok=True)
     paths = []
     for kind, name in (("machine", printer), ("process", process), ("filament", filament)):
         path = target / f"{kind}-{re.sub(r'[^A-Za-z0-9._-]+', '_', name)}.json"
-        path.write_text(
-            json.dumps(resolve_preset(profiles_dir, kind, name), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        preset = resolve_preset(profiles_dir, kind, name)
+        if kind == "process" and compensation is not None:
+            preset.update(compensation.settings())
+        path.write_text(json.dumps(preset, ensure_ascii=False, indent=2), encoding="utf-8")
         paths.append(path)
     return paths[0], paths[1], paths[2]
 
@@ -225,6 +235,7 @@ def slice_3mf(
     printer_preset: str,
     process: str,
     filament: str,
+    compensation: BambuCompensation | None = None,
 ) -> SliceResult:
     profiles = find_profiles_dir()
     if profiles is None:
@@ -233,7 +244,12 @@ def slice_3mf(
             "導入するか、環境変数 BAMBU_PROFILES で指定してください"
         )
     machine, proc, fil = write_presets(
-        profiles, out_dir, printer=printer_preset, process=process, filament=filament
+        profiles,
+        out_dir,
+        printer=printer_preset,
+        process=process,
+        filament=filament,
+        compensation=compensation,
     )
     launcher = bambu_command()
     ensure_visible_to_sandbox(out_dir, launcher)

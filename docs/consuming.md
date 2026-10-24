@@ -69,5 +69,5 @@ uv run lab watch mini            # parts/(と、あれば src/)を見張り、�
 
 ## 範囲
 
-- パッケージに入るのは `src/lab/` だけ。このリポジトリの `parts/`(試験片と Pico のケース)と `docs/printers/` は入らない。機種の表(`src/lab/printers.py`)は入るので、`lab check --printer` は使える。機種ごとの根拠の文書は、このリポジトリを読む。
+- パッケージに入るのは `src/lab/` だけ。このリポジトリの `parts/`(Pico のケースと、そのはめ合いを決めるプレート)と `docs/printers/` は入らない。機種の表(`src/lab/printers.py`)は入るので、`lab check --printer` は使える。機種ごとの根拠の文書は、このリポジトリを読む。
 - 使う側から見える API は、`lab` コマンドと、部品が使う `lab.references.Reference` まで。それ以外のモジュールは、使う側から直接は使わない前提で、版の間で変わりうる。
