@@ -100,6 +100,86 @@ def test_pico_bootsel_follows_the_official_step():
     assert (d.bootsel_x, d.bootsel_y) == (13.5, 3.5)
 
 
+def test_headers_assembly_has_no_interference():
+    # 上向きのヘッダ(樹脂部・ピン・基板の下へ出る足)が、蓋のスロットを通り、底に当たらない
+    m = load("pico_assembly_headers")
+    report = inspect_shape("pico_assembly_headers", m.build())
+    assert report.ok, report.lines()
+    assert report.solids == 3  # 本体・蓋・基板(ヘッダは基板と 1 つに融合する)
+
+
+def test_lid_without_the_slots_collides_with_the_header_pins():
+    # スロットが要る根拠: 同じ高さでスロットだけ抜かない蓋だと、ピンと樹脂が板に刺さる
+    m = load("pico_case")
+    d = m.Dims(headers=True)
+    flat_lid = m.lid(m.Dims(standoff_h=d.standoff))  # headers=False でも、高さは同じ
+    report = inspect_shape("no-slot", Compound([flat_lid, m.board(d)]))
+    assert not report.ok
+    assert len(report.interferences) == 1
+    _, _, volume = report.interferences[0]
+    # 40 本のピンが板(1.2 mm)を貫く分だけでも 40 x 0.64^2 x 1.2 ≈ 19.7 mm^3
+    assert volume > 19.0
+
+
+def test_header_positions_follow_the_datasheet():
+    # Pico Datasheet, Figure 3(取得 2026-10-31): 列の間隔 17.78、1 列 20 本の範囲 48.26 mm
+    # (ピッチ 2.54 x 19)で、基板の中心に揃う(短辺から 1.37 mm、長辺から 1.61 mm)
+    m = load("pico_case")
+    d = m.Dims(headers=True)
+    pins = d.header_pins
+    xs = sorted({round(x, 6) for x, _ in pins})
+    ys = sorted({round(y, 6) for _, y in pins})
+    assert len(pins) == 40
+    assert ys == [-8.89, 8.89]
+    assert xs[-1] - xs[0] == pytest.approx(48.26)
+    assert (d.pcb_l - 48.26) / 2 == pytest.approx(1.37)
+    assert (d.pcb_w - d.row_dy) / 2 == pytest.approx(1.61)
+    assert all(b - a == pytest.approx(2.54) for a, b in zip(xs, xs[1:], strict=False))
+
+
+def test_header_standoff_is_derived_from_the_pin_tail():
+    # ピンが基板の下へ出る長さ(3.0 - 1.0)に tail_gap を足した高さ。ヘッダ無しは従来のまま
+    m = load("pico_case")
+    assert m.Dims().standoff == m.Dims().standoff_h == 1.5
+    d = m.Dims(headers=True)
+    assert d.standoff == pytest.approx(2.5)
+    assert d.z_pcb_bottom - (d.header_tail - d.pcb_t) == pytest.approx(d.floor_t + d.tail_gap)
+
+
+def test_headers_do_not_change_the_headerless_case():
+    # ヘッダ無しの既定の形は、試し刷り(plate_pico_v2)が使う。ヘッダの導入で寸法が動かないこと
+    m = load("pico_case")
+    # 高さは、ヘッダの導入前(HEAD 93fe831)と同じ。体積も、導入前のファイルと一致することを
+    # 実装時に確かめた(本体 3213.789、蓋 2613.966、基板 1211.802 mm^3)
+    d = m.Dims()
+    assert (d.z_pcb_bottom, d.z_mate) == pytest.approx((2.7, 7.7))
+    assert float(m.base(d).volume) == pytest.approx(3213.789, abs=1e-3)
+    assert float(m.lid(d).volume) == pytest.approx(2613.966, abs=1e-3)
+    # ヘッダ付きのスロットは、蓋の体積を減らす(2 本 x 51.4 x 3.14 x 1.2 mm)
+    slots = 2 * 51.4 * 3.14 * 1.2
+    lid_h = float(m.lid(m.Dims(headers=True)).volume)
+    lid_plain = float(m.lid(m.Dims(standoff_h=2.5)).volume)
+    assert lid_plain - lid_h == pytest.approx(slots, rel=1e-3)
+
+
+def test_headers_part_rejects_what_is_derived():
+    m = load("pico_case_headers")
+    for name in ("standoff_h", "headers"):
+        with pytest.raises(ValueError, match=name):
+            m.build(**{name: 1.0})
+    with pytest.raises(ValueError, match="head"):
+        load("pico_case").Dims(headers=True, head=2.0)  # 蓋の裏が樹脂部に当たる
+
+
+def test_headers_case_sits_on_the_plate():
+    m = load("pico_case_headers")
+    report = inspect_shape("pico_case_headers", m.build())
+    assert report.ok, report.lines()
+    assert report.solids == 2
+    assert report.z_min == pytest.approx(0.0, abs=1e-6)
+    assert report.size[0] <= 256 and report.size[1] <= 256
+
+
 def test_plate_fits_the_bed_with_all_pieces():
     m = load("plate_pico_v2")
     report = inspect_shape("plate", m.build())
