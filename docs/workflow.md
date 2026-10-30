@@ -9,7 +9,7 @@ uv run lab viewer            # 別の端末で常駐。ブラウザで http://12
 uv run lab watch pico_case   # parts/ と src/ を保存するたびにビューアへ送る
 ```
 
-部品は `parts/<名前>.py` の `build(**params)`。はめ合いの寸法は定数にせず引数にする(`uv run lab show pico_case --set fit=0.25` のように変えて見られる)。組み付けた姿勢は `pico_assembly` で見る。
+部品は `parts/<名前>.py` の `build(**params)`。はめ合いの寸法は定数にせず引数にする(`uv run lab show pico_case --set fit=0.25` のように変えて見られる)。組み付けた姿勢は `pico_assembly` で見る。ピンヘッダ(上向き、2.54 mm ピッチ、20 ピン × 2)をはんだ付けした Pico のケースは、別の部品 `pico_case_headers`(組み付けは `pico_assembly_headers`)。蓋のスロットからジャンパ線で引き出す。寸法と根拠は `parts/pico_case.py` の docstring にある。
 
 ## 2. 検査する(家)
 
