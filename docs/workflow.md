@@ -71,7 +71,7 @@ uv run lab slice plate_pico_v2 --printer prusa-core-one-l   # PrusaSlicer。CORE
 
 ### 寸法補正
 
-機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-30](adr/30-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`)。
+機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-30](adr/30-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`、ノギスの仕様は下の「5. 工房で刷る」の「測る道具」)。
 
 - **Bambu Studio**: `xy_hole_compensation`(穴。正で大きくなる)と `xy_contour_compensation`(外形。正で大きくなる)。`lab slice` が書き出す `out/<部品>.sliced.3mf` の設定に、表の値が入る(Bambu Studio 2.8.2.61 で読み戻した)。GUI でプロジェクトを開き直して保存し直すときは、Process の Quality にある「X-Y hole compensation」「X-Y contour compensation」が表の値であることと、「Auto circle contour-hole compensation」が切れていることを確かめる(自動の円補正が有効だと、手動の 2 値は 0 に戻される)。画面の並びは未確認。
 - **PrusaSlicer**: `xy_size_compensation` の 1 値(Advanced、Expert モード)。物体全体を広げる(正)・狭める(負)ので、穴と外形は別々に補正できない。
@@ -89,6 +89,25 @@ uv run lab slice plate_pico_v2 --printer prusa-core-one-l   # PrusaSlicer。CORE
 - 印刷が終わったら、ノギスで本体の内寸・外寸と蓋の袖の内寸を測り(高さの中ほど。下の 1 層は広がりやすい)、`docs/printers/bambu-p1s-x1.md` の寸法の表を埋める
 - 本体に蓋を、点の数 1 / 2 / 3 の順にかぶせて、入る・止まる・外せるを同じ文書の判定表に書く。最初にはめたときの感触を書く(繰り返すと変わりうる)
 - 本体に基板(Pico)を入れて蓋を閉め、はまり方・USB の開口・BOOTSEL の穴の位置を確かめる
+
+### 測る道具
+
+ノギスは次の仕様のものを使う。
+
+- デジタル表示で、最小表示 0.01 mm
+- 最大許容誤差 ±0.02〜0.03 mm
+- 測定範囲 150 mm
+- 金属製(ステンレス)
+- 内側用の爪とデプスバーが付いていること
+
+根拠は次のとおり。
+
+- **精度**: 見たいずれは 0.1 mm 前後(設計の隙間は片側 0.2〜0.3 mm、`fit` の刻みは 0.1 mm)で、寸法補正値は 0.05 mm 刻みで決める。測る器具の誤差は、見たい量の 1/4 以下に収める目安がある(4:1 の規則。MIL-STD-45662A が校正標準の不確かさを許容差の 25% 以下と定め、ANSI/NCSL Z540.1 も取り入れたと、二次資料が記述する。出典: Simco, [What the 4:1 Calibration Ratio Was Meant to Do and What It Wasn't](https://www.simco.com/?p=26409)、取得 2026-10-30。規格そのものは未読)。ここでは、校正の比でなく、測りたいずれと器具の誤差の比に流用した目安で、0.1 mm の 1/4 は 0.025 mm
+- **表示の端数**: 最大許容誤差が表示の端数(±1 カウント = ±0.01 mm)を含むかは製品で違う。含まない表記の製品では、最悪で 0.01 mm 足して読む
+- **範囲**: 測る最大は蓋の袖の内寸 55.2 mm(`Dims` の設計値)なので、150 mm で足りる
+- **内側用の爪**: 本体の内寸と袖の内寸を測るのに要る。本体の高さは 7.7 mm、内側の深さは 6.5 mm(`parts/pico_case.py` の `floor_t` + `standoff_h` + `pcb_t` + `head` と `floor_t`)で、高さの中ほどに爪を当てる。実機に爪が届くかは未確認(購入後に #7 で確かめる)
+
+型番・価格・購入先は、買うたびに変わるので書かない。
 
 ## 6. 実物を測って、引数へ戻す
 
