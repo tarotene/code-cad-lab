@@ -20,6 +20,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .printers import PrusaCompensation
 from .slice_common import PresetError, SliceResult, SlicerNotFoundError
 
 EXPECTED_VERSION = "2.9.6"  # この版の resources と CLI で確かめた(確かめた版以外は警告する)
@@ -174,8 +175,18 @@ def build_args(
     process: str,
     filament: str,
     center: tuple[float, float],
+    compensation: PrusaCompensation | None = None,
 ) -> list[str]:
-    """CLI の引数(`prusa-slicer --help` の形)。3MF の座標は原点まわりなので、ベッドの中央へ置く。"""
+    """CLI の引数(`prusa-slicer --help` の形)。3MF の座標は原点まわりなので、ベッドの中央へ置く。
+
+    `compensation` を渡すと、その寸法補正を設定の旗で渡し、プリセットの同名の値を上書きする
+    (機種の表が正本)。
+    """
+    overrides = (
+        []
+        if compensation is None
+        else [arg for key, value in compensation.settings().items() for arg in (f"--{key}", value)]
+    )
     return [
         "--datadir",
         str(datadir),
@@ -188,6 +199,7 @@ def build_args(
         "--no-binary-gcode",
         "--center",
         f"{center[0]:g},{center[1]:g}",
+        *overrides,
         "--export-gcode",
         "--output",
         str(output_gcode),
@@ -226,6 +238,7 @@ def slice_3mf(
     process: str,
     filament: str,
     center: tuple[float, float],
+    compensation: PrusaCompensation | None = None,
 ) -> SliceResult:
     launcher = prusa_command()
     profiles = find_profiles_dir(launcher)
@@ -246,6 +259,7 @@ def slice_3mf(
             process=process,
             filament=filament,
             center=center,
+            compensation=compensation,
         ),
     ]
     gcode.unlink(missing_ok=True)  # 前の実行の G-code を、今回の成果物と取り違えない

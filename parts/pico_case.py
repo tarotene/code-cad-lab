@@ -26,8 +26,37 @@ BOOTSEL ボタンの大きさと高さ(STEP の値に合わせた近似)。組�
 「pinout and board layout … is the same」と述べる)。ピンヘッダ無しで収める。Pico W / Pico 2 W は
 下辺にアンテナの空き領域(14 x 9 mm、金属で囲わない)があるので、このケースの対象外。
 
-はめ合いの寸法(`clearance` `fit` `snap_bump` ほか)は、工房の機械で刷って初めて決まる値なので、
+はめ合いの寸法(`clearance` `fit` `snap_engage` ほか)は、工房の機械で刷って初めて決まる値なので、
 すべて引数にしてある。
+
+**スナップの引数は食い込み `snap_engage`。** 突起の高さは `fit + snap_engage` で導く(`snap_bump`)。
+突起の高さを引数にすると、`fit` を上げたときに突起を上げ忘れ、蓋が止まらない状態を書けてしまう。
+食い込みは、蓋を止める力そのもの(腕のたわみ = 食い込み)で、`fit` を変えても揃えて比べられる。
+
+**開閉の見込み(未検証)。** 蓋の袖は片持ちの腕で、根元の最大ひずみは ε = 1.5·y·h / l²
+(y: たわみ = `snap_engage`、h: 厚み = `skirt_t`、l: 長さ)。既定値(y = 0.2、h = 1.0 mm)では、
+l = 袖の長さ 5 mm で 1.2%、突起までの有効な長さ 3.8 mm とみなすと 2.1% になる。何度も外す
+設計の許容ひずみは、1 回きりの約 60%(Bayer, Table 2)。FDM の PLA の降伏ひずみは約 2〜3%
+(Ultimaker の PLA データシート: XY 面で 3.3%)なので、1 回きりで約 2.0〜2.3%、繰り返しで約
+1.2〜1.4% になる。つまり、この腕は繰り返す設計の上限と同じか、超える。腕は積層方向に立てて刷る
+(蓋は板を下にする)ので、層間で割れやすい向き。PLA は、はめたまま置くと応力が緩んで保持力が
+落ちる(Bertocco ほか, Materials 2022: 引張で 500 秒に約 11〜13%)。
+
+開閉できる回数の公表値は見つからなかった。回転曲げの疲労データ(Azadi & Dadashi, 2022)から
+推論すると、数十〜数百回で白化やへたりが出る。裏付けは無い。回数を増やす手は、腕を長くする(ひずみは
+長さの 2 乗に反比例)、`snap_engage` を下げる、腕の根元に R を付ける(Bayer: 0.4 mm 以上)、
+PETG などに替える、の 4 つ。開閉の頻度が決まるまで、腕の形は変えていない。
+
+出典(取得はすべて 2026-10-24):
+
+- Bayer MaterialScience, Snap-Fit Joints for Plastics – A Design Guide(Table 1・2、p.11–12、p.23)
+  https://fab.cba.mit.edu/classes/S62.12/people/vernelle.noel/Plastic_Snap_fit_design.pdf
+- Ultimaker, Technical data sheet PLA v3.006(2017-02-28)
+  https://www.utwente.nl/en/rpl/Data%20sheets/Ultimaker%203/PLA.pdf
+- Azadi, M., Dadashi, A., Data in Brief 41 (2022) 107846
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC8800022/
+- Bertocco ほか, Materials (2022), PMC9147248
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC9147248/
 """
 
 from __future__ import annotations
@@ -37,6 +66,12 @@ from dataclasses import dataclass
 from build123d import Box, Compound, Cylinder, Pos, Rot, Shape
 
 from _snap import bump, check_snap, groove
+
+# 蓋の見分けの点。USB と反対側(-X)から並べ、+X 寄りの BOOTSEL の穴を避ける
+MARK_D = 1.5
+MARK_DEPTH = 0.4
+MARK_X0 = -20.0
+MARK_PITCH = 3.0
 
 
 @dataclass(frozen=True)
@@ -72,13 +107,21 @@ class Dims:
     skirt_t: float = 1.0
     skirt_h: float = 5.0
     fit: float = 0.2  # 袖と外壁の隙間(片側)
-    snap_bump: float = 0.4  # 突起が袖の内側の面から出る量
+    snap_engage: float = 0.2  # 突起の頂点が外壁の面へ食い込む量(蓋を止める強さ)
     bump_from_tip: float = 1.2  # 袖の先端から突起の中心まで
     snap_w: float = 14.0  # 撓む腕の幅(スリットの内側)
     slot_w: float = 1.0
     bootsel_hole_d: float = 3.0
 
+    def __post_init__(self) -> None:
+        check_snap(self.fit, self.snap_engage)
+
     # --- 導出 ---
+    @property
+    def snap_bump(self) -> float:
+        """突起が袖の内側の面から出る量。"""
+        return self.fit + self.snap_engage
+
     @property
     def cav_l(self) -> float:
         return self.pcb_l + 2 * self.clearance
@@ -126,8 +169,11 @@ class Dims:
 
 
 def base(d: Dims) -> Shape:
-    """本体。開口を上に向けた姿勢(そのまま造形板に載る)。"""
-    check_snap(d.fit, d.snap_bump)
+    """本体。開口を上に向けた姿勢(そのまま造形板に載る)。
+
+    外壁の溝は `d.fit` で決まる。溝の幅は `fit` が小さいほど広いので、蓋の `fit` 以下の `fit` で
+    作った本体は、その蓋を受けられる。
+    """
     shape = Pos(0, 0, d.z_mate / 2) * Box(d.out_l, d.out_w, d.z_mate)
     cavity_h = d.z_mate - d.floor_t + 1.0
     shape -= Pos(0, 0, d.floor_t + cavity_h / 2) * Box(d.cav_l, d.cav_w, cavity_h)
@@ -152,17 +198,19 @@ def base(d: Dims) -> Shape:
         shape -= groove(
             d.out_w / 2,
             d.z_bump,
-            snap_bump=d.snap_bump,
             fit=d.fit,
+            engage=d.snap_engage,
             length=d.snap_w + 0.6,
             side=side,
         )
     return shape
 
 
-def lid(d: Dims) -> Shape:
-    """蓋。組み付けた姿勢(板が上、袖が下)。"""
-    check_snap(d.fit, d.snap_bump)
+def lid(d: Dims, marks: int = 0) -> Shape:
+    """蓋。組み付けた姿勢(板が上、袖が下)。
+
+    `marks` は、板の外側の面に彫る点の数。隙間の違う蓋を何枚か刷るとき、見分けに使う。
+    """
     h = d.lid_t + d.skirt_h
     z_tip = d.z_mate - d.skirt_h
     shape = Pos(0, 0, z_tip + h / 2) * Box(d.lid_l, d.lid_w, h)
@@ -191,7 +239,8 @@ def lid(d: Dims) -> Shape:
         shape += bump(
             d.out_w / 2 + d.fit,
             d.z_bump,
-            snap_bump=d.snap_bump,
+            fit=d.fit,
+            engage=d.snap_engage,
             length=d.snap_w - 1.0,
             side=side,
         )
@@ -200,6 +249,12 @@ def lid(d: Dims) -> Shape:
     shape -= Pos(d.bootsel_x, d.bootsel_y, d.z_mate + d.lid_t / 2) * Cylinder(
         d.bootsel_hole_d / 2, d.lid_t + 0.2
     )
+
+    # 見分けの点(板の外側の面。造形板に接する面)
+    z_top = d.z_mate + d.lid_t
+    for i in range(marks):
+        x = MARK_X0 + i * MARK_PITCH
+        shape -= Pos(x, 0, z_top - MARK_DEPTH / 2 + 0.05) * Cylinder(MARK_D / 2, MARK_DEPTH + 0.1)
     return shape
 
 
@@ -217,14 +272,18 @@ def board(d: Dims) -> Shape:
     return pcb
 
 
-def assembly(d: Dims) -> Compound:
-    """本体・蓋・基板を組み付けた姿勢。Solid どうしが重ならないことを検査で確かめる。"""
-    return Compound([base(d), lid(d), board(d)])
+def assembly(d: Dims, base_d: Dims | None = None) -> Compound:
+    """本体・蓋・基板を組み付けた姿勢。Solid どうしが重ならないことを検査で確かめる。
+
+    `base_d` は本体だけに使う寸法。蓋と本体で `fit` が違う組(本体を 1 個にして蓋を刷り分けたとき)を
+    確かめるのに使う。
+    """
+    return Compound([base(base_d or d), lid(d), board(d)])
 
 
-def lid_for_printing(d: Dims) -> Shape:
+def lid_for_printing(d: Dims, marks: int = 0) -> Shape:
     """蓋を、板を下にして袖を上へ向けた姿勢(造形板に載る向き)。"""
-    flipped = Rot(180, 0, 0) * lid(d)
+    flipped = Rot(180, 0, 0) * lid(d, marks)
     return Pos(0, 0, -flipped.bounding_box().min.Z) * flipped
 
 

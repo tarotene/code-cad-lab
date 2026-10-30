@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import slice_bambu, slice_prusa
-from .printers import Printer
+from .printers import BambuCompensation, Printer, PrusaCompensation
 from .slice_common import PresetError, SliceResult, SlicerNotFoundError
 
 __all__ = [
@@ -56,8 +56,15 @@ def slice_3mf(
         "process": process or printer.process,
         "filament": filament or printer.filament,
     }
-    if printer.slicer == "bambu":
-        return slice_bambu.slice_3mf(input_3mf, out_dir, name, **presets)
+    compensation = printer.compensation
+    if isinstance(compensation, BambuCompensation):
+        return slice_bambu.slice_3mf(input_3mf, out_dir, name, **presets, compensation=compensation)
+    assert isinstance(compensation, PrusaCompensation)
     return slice_prusa.slice_3mf(
-        input_3mf, out_dir, name, **presets, center=(printer.bed[0] / 2, printer.bed[1] / 2)
+        input_3mf,
+        out_dir,
+        name,
+        **presets,
+        compensation=compensation,
+        center=(printer.bed[0] / 2, printer.bed[1] / 2),
     )

@@ -46,14 +46,14 @@ BOARD_STEP=~/cad/board.step uv run lab check my_part
 ## 3. 書き出して、家でスライスして確かめる
 
 ```bash
-uv run lab export plate_pico_v1     # out/plate_pico_v1.3mf と .step
+uv run lab export plate_pico_v2     # out/plate_pico_v2.3mf と .step
 ```
 
 CLI で予測時間と材料の重さだけ見るなら、書き出しからスライスまで 1 本で通せる。スライサーは機種(`--printer`)が決めるので、機種の組み合わせを間違えることはない(導入は dotfiles の宣言、または `nix shell nixpkgs#prusa-slicer` で行う):
 
 ```bash
-uv run lab slice plate_pico_v1                              # bambu-p1s-x1: Bambu Studio。P1S 0.4 nozzle / 0.20mm Standard / Bambu PLA Basic
-uv run lab slice plate_pico_v1 --printer prusa-core-one-l   # PrusaSlicer。CORE One L 0.4 nozzle / 0.20mm SPEED / Prusament PLA
+uv run lab slice plate_pico_v2                              # bambu-p1s-x1: Bambu Studio。P1S 0.4 nozzle / 0.20mm Standard / Bambu PLA Basic
+uv run lab slice plate_pico_v2 --printer prusa-core-one-l   # PrusaSlicer。CORE One L 0.4 nozzle / 0.20mm SPEED / Prusament PLA
 ```
 
 プリセットの名前は `--printer-preset` / `--process` / `--filament` で変えられる(既定は `src/lab/printers.py` の表)。プリセットの実体はどちらのスライサーのものもこのリポジトリに置かず、インストール済みのスライサーから実行時に読む。
@@ -63,9 +63,18 @@ uv run lab slice plate_pico_v1 --printer prusa-core-one-l   # PrusaSlicer。CORE
 
 `out/` の 3MF を、家の Bambu Studio(機種は工房の機種、材料は PLA)で開く。確かめること:
 
-- 部品の数と向き(本体は開口が上、蓋は板が下)
+- 寸法補正が機種の表の値であること(下の「寸法補正」)
+- 部品の数と向き(本体 1 個は開口が上、蓋 3 枚は板が下)
 - サポートが要らないこと(突起と溝は 45° の側面)
+- 蓋の突起(`fit` 0.4 の蓋では 0.6 mm の段)と、板の外側の面の点(1 / 2 / 3 個)が、層として残っていること
 - 印刷時間と材料の量
+
+### 寸法補正
+
+機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-30](adr/30-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`)。
+
+- **Bambu Studio**: `xy_hole_compensation`(穴。正で大きくなる)と `xy_contour_compensation`(外形。正で大きくなる)。`lab slice` が書き出す `out/<部品>.sliced.3mf` の設定に、表の値が入る(Bambu Studio 2.8.2.61 で読み戻した)。GUI でプロジェクトを開き直して保存し直すときは、Process の Quality にある「X-Y hole compensation」「X-Y contour compensation」が表の値であることと、「Auto circle contour-hole compensation」が切れていることを確かめる(自動の円補正が有効だと、手動の 2 値は 0 に戻される)。画面の並びは未確認。
+- **PrusaSlicer**: `xy_size_compensation` の 1 値(Advanced、Expert モード)。物体全体を広げる(正)・狭める(負)ので、穴と外形は別々に補正できない。
 
 ## 4. 持ち込む
 
@@ -76,12 +85,13 @@ uv run lab slice plate_pico_v1 --printer prusa-core-one-l   # PrusaSlicer。CORE
 
 ## 5. 工房で刷る
 
-- 工房の PC で 3MF を開き、機種と材料を確かめて刷る
-- 印刷が終わったら、試験片に番号を書き、その場で組み合わせて、`docs/printers/bambu-p1s-x1.md` の表を埋める
-- ケースの本体と蓋を組み合わせ、基板(Pico)を入れて、はまり方・USB の開口・BOOTSEL の穴の位置を確かめる
+- 工房の PC で 3MF を開き、機種と材料を確かめて刷る。どの機種(P1S / X1)で刷ったかを控える
+- 印刷が終わったら、ノギスで本体の内寸・外寸と蓋の袖の内寸を測り(高さの中ほど。下の 1 層は広がりやすい)、`docs/printers/bambu-p1s-x1.md` の寸法の表を埋める
+- 本体に蓋を、点の数 1 / 2 / 3 の順にかぶせて、入る・止まる・外せるを同じ文書の判定表に書く。最初にはめたときの感触を書く(繰り返すと変わりうる)
+- 本体に基板(Pico)を入れて蓋を閉め、はまり方・USB の開口・BOOTSEL の穴の位置を確かめる
 
 ## 6. 実物を測って、引数へ戻す
 
-- 採用する `fit`(と必要なら `snap_bump`)を `parts/pico_case.py` の `Dims` の既定値に反映する
+- 採用する `fit`(と必要なら `snap_engage`)を `parts/pico_case.py` の `Dims` の既定値に反映する
 - BOOTSEL の穴の位置(`bootsel_x` / `bootsel_y`)は、公式の 3D モデル(STEP)の値で、データシートの寸法図には無い(公式は「guidance only」としている)。実物の Pico に当てて合わせる
 - 変更は PR にして、`docs/printers/bambu-p1s-x1.md` の実測の欄と一緒に出す
