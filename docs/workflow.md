@@ -73,12 +73,18 @@ uv run lab slice plate_pico_v2 --printer prusa-core-one-l   # PrusaSlicer。CORE
 
 機械の寸法のずれは、設計の寸法ではなく、スライサーの寸法補正で吸収する([ADR-30](adr/30-xy-compensation-in-slicer.md))。補正値は機種の表(`src/lab/printers.py`)にあり、`lab slice` が同名の設定に上書きして渡す。既定はすべて 0 で、ノギスで測った実測値から決めて表に入れる(測り方は `docs/printers/bambu-p1s-x1.md`、ノギスの仕様は下の「5. 工房で刷る」の「測る道具」)。
 
-- **Bambu Studio**: `xy_hole_compensation`(穴。正で大きくなる)と `xy_contour_compensation`(外形。正で大きくなる)。`lab slice` が書き出す `out/<部品>.sliced.3mf` の設定に、表の値が入る(Bambu Studio 2.8.2.61 で読み戻した)。GUI でプロジェクトを開き直して保存し直すときは、Process の Quality にある「X-Y hole compensation」「X-Y contour compensation」が表の値であることと、「Auto circle contour-hole compensation」が切れていることを確かめる(自動の円補正が有効だと、手動の 2 値は 0 に戻される)。画面の並びは未確認。
+- **Bambu Studio**: `xy_hole_compensation`(穴。正で大きくなる)と `xy_contour_compensation`(外形。正で大きくなる)。`lab slice` が書き出す `out/<部品>.sliced.3mf` の設定ファイルに、表の値が入る(Bambu Studio 2.8.2.61 で読み戻した)。**ただし、この 3MF を Bambu Studio の画面で開くと、補正値は 0 / 0 と表示され、「Slice plate」で補正値 0 の再スライスになる**(2026-10-31 に確認。設定ファイルの `different_settings_to_system` が空で、標準プリセットの値が使われたと見ている。因果は未分離)。工房で画面を使うなら、`lab slice` の 3MF を持ち込まず、次の手順で、画面で補正値を入れて保存したプロジェクトを持ち込む。
+
+  1. 画面の Process で「Advanced」のトグルを入れ、Quality タブの Precision で、「X-Y hole compensation」「X-Y contour compensation」を表の値にする。「Auto circle contour-hole compensation」が切れていることを確かめる(自動の円補正が有効だと、手動の 2 値は 0 に戻される)。
+  2. 「Slice plate」を押し、予測時間と重さが `lab slice` の出力と一致することを確かめる(2026-10-31 の `plate_pico_v2` は 29m10s、4.63 m、14.02 g で一致した)。
+  3. File メニューの「Save Project As」でプロジェクトを保存する。保存した 3MF の `different_settings_to_system` に、2 つのキー名(`xy_contour_compensation;xy_hole_compensation`)が入る。
+
+  画面の名称の並びは、家の Bambu Studio で見たもの(画面の版は確認していない。`lab slice` が使う CLI は 2.8.2.61)。工房の PC の版では、並びや挙動が違うかもしれない(未確認)。
 - **PrusaSlicer**: `xy_size_compensation` の 1 値(Advanced、Expert モード)。物体全体を広げる(正)・狭める(負)ので、穴と外形は別々に補正できない。
 
 ## 4. 持ち込む
 
-- 家でスライスして設定を決めた 3MF のプロジェクト(Bambu Studio で保存したもの)
+- 家でスライスして設定を決めた 3MF のプロジェクト(**Bambu Studio の画面で補正値を入れて保存したもの**。`lab slice` の 3MF は、画面で開くと補正値が 0 に戻るので、持ち込まない。3 節)
 - 形状だけの 3MF と STEP(工房の Bambu Studio が古く、プロジェクトを開けなかったときの備え)
 
 工房の PC には USB メモリで渡す想定にする(自分の記憶では前回も USB メモリで渡せた。裏取りは無い)。つながらなかったときは、当日、職員に別の手段を確かめる。事前の問い合わせは要らない。
