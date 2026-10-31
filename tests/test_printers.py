@@ -70,9 +70,12 @@ def test_compensation_settings_use_the_slicers_own_keys():
     assert PrusaCompensation(xy_size=-0.1).settings() == {"xy-size-compensation": "-0.1"}
 
 
-def test_compensation_defaults_to_zero_until_measured():
-    for printer in PRINTERS.values():
-        assert all(float(v) == 0 for v in printer.compensation.settings().values())
+def test_compensation_is_zero_until_a_printer_is_measured():
+    # 実測した機種は値が入っている(P1S は 2026-10-31 の 1 周目の実測から。docs/printers/)。
+    # まだ刷って測っていない機種(Prusa、#24)は 0 のまま。
+    assert PRINTERS["bambu-p1s-x1"].compensation == BambuCompensation(xy_hole=0.10, xy_contour=0.05)
+    for name in ("prusa-core-one-l",):
+        assert all(float(v) == 0 for v in PRINTERS[name].compensation.settings().values())
 
 
 @pytest.mark.parametrize("value", [2.01, -2.01, 10.0])
