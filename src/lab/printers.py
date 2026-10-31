@@ -89,14 +89,15 @@ PRINTERS: dict[str, Printer] = {
     p.name: p
     for p in (
         # P1S 用の process は無く、X1C の 0.20mm Standard が `compatible_printers` に
-        # P1S 0.4 nozzle を含む。補正値は、工房の実機で刷って測るまで 0(`docs/printers/`)。
+        # P1S 0.4 nozzle を含む。補正値は、1 周目(補正値 0)のケースの実測から決めた
+        # (2026-10-31、`docs/printers/bambu-p1s-x1.md` の「寸法の実測」と「補正値の導出」)。
         Printer(
             "bambu-p1s-x1",
             (256.0, 256.0, 256.0),
             "Bambu Lab P1S 0.4 nozzle",
             "0.20mm Standard @BBL X1C",
             "Bambu PLA Basic @BBL P1S 0.4 nozzle",
-            BambuCompensation(),
+            BambuCompensation(xy_hole=0.10, xy_contour=0.05),
         ),
         Printer(
             "prusa-core-one-l",
