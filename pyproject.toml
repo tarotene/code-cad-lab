@@ -5,7 +5,7 @@ description = "コードで部品を設計して FDM 3D プリンタで刷る Po
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.15,<3.16"
 dependencies = [
     # 0.x はマイナー版ごとに破壊的変更が入るので、完全一致で pin する(ADR-0001)。
     "build123d==0.13.0",
